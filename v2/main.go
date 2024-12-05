@@ -135,6 +135,17 @@ func (h *Hand) findGap1Cards() {
 			fmt.Println()
 		}
 
+		if gapC.Status == Bd {
+			// HT 牌型
+			fmt.Println("卡隆牌型")
+			for _, card := range gapC.Cards {
+				fmt.Printf("%d ", card.Value)
+			}
+			fmt.Println("分值", gapC.Score)
+			fmt.Printf("癞子使用次数: %d\n", gapC.JokerUseNum)
+			fmt.Println()
+		}
+
 	}
 }
 
@@ -252,25 +263,37 @@ func (h *Hand) findGapFromL2S() map[string]gapCard {
 					gapC.Cards = append(gapC.Cards, cards[i])
 					gapC.Status = Bd
 					gapC.Score += cards[i].Value
+					gapC.JokerUseNum++
 				}
 				continue
 			}
 
 			if gapC.Status == HT {
-				// 因为该牌已经是从小到大了， 如果已经是 2 3 下一张应该就是5 才可能是合理的间隙牌否则就是顺子了，不应该出现在这里
 				if gapC.Cards[len(gapC.Cards)-1].Value-2 == cards[i].Value && gapC.JokerUseNum == 0 {
-					// 因为假设后面还有6的情况需要兼容这个情况
 					gapC.Cards = append(gapC.Cards, cards[i])
 					gapC.Score += cards[i].Value
 					gapC.JokerUseNum++
 				}
 
 				if gapC.Cards[len(gapC.Cards)-1].Value-1 == cards[i].Value && gapC.JokerUseNum == 1 {
-					// 如果前面是 2 3 5，此时是6
 					gapC.Cards = append(gapC.Cards, cards[i])
 					gapC.Score += cards[i].Value
 				}
 				continue
+			}
+
+			// BT 牌型
+			if gapC.Status == Bd {
+				//if gapC.Cards[len(gapC.Cards)-1].Value-2 == cards[i].Value && gapC.JokerUseNum == 0 {
+				//	gapC.Cards = append(gapC.Cards, cards[i])
+				//	gapC.Score += cards[i].Value
+				//	gapC.JokerUseNum++
+				//}
+
+				if gapC.Cards[len(gapC.Cards)-1].Value-1 == cards[i].Value && gapC.JokerUseNum == 1 {
+					gapC.Cards = append(gapC.Cards, cards[i])
+					gapC.Score += cards[i].Value
+				}
 			}
 		}
 
