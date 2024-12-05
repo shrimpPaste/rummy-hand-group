@@ -2,58 +2,29 @@ package main
 
 import (
 	"fmt"
+	"rummy-group-v2/pkg/app"
 	"sort"
 )
 
-const (
-	A      string = "A"      // 黑桃
-	B      string = "B"      // 红桃
-	C      string = "C"      // 梅花
-	D      string = "D"      // 方片
-	JokerA string = "JokerA" // 大鬼
-	JokerB string = "JokerB" // 小鬼
-)
-
-const (
-	NotStatus int = 0 // 无状态
-	HT        int = 1 // Head and Tail 缺少首尾的牌  2 3 缺少 1 4
-	Bd        int = 2 // blocked // 卡隆牌 3 5 缺少 4
-)
-
-type Card struct {
-	Suit  string
-	Value int
-}
-
 // Hand 手牌
 type Hand struct {
-	cards     []Card
-	joker     []Card
-	valid     []Card
-	invalid   []Card
-	gap1Cards []Card // 间隙为1的牌
-	suitCards map[string][]Card
-}
-
-type gapCard struct {
-	Cards       []Card
-	Status      int
-	Score       int
-	JokerUseNum int
-	// 0: 无状态
-	// 1: 1 2 4 牌型 应得到 1 2 4
-	// 2: 3 5 7 牌型 应得到 5 7
+	cards     []app.Card
+	joker     []app.Card
+	valid     []app.Card
+	invalid   []app.Card
+	gap1Cards []app.Card // 间隙为1的牌
+	suitCards map[string][]app.Card
 }
 
 // handSliceDifference 找两个数组之间的差集
-func (h *Hand) handSliceDifference(a, b []Card) []Card {
+func (h *Hand) handSliceDifference(a, b []app.Card) []app.Card {
 	// 创建一个 map 来存储 b 中的元素
-	bMap := make(map[Card]struct{})
+	bMap := make(map[app.Card]struct{})
 	for _, card := range b {
 		bMap[card] = struct{}{} // 用空结构体来表示集合中的元素
 	}
 
-	var difference []Card
+	var difference []app.Card
 	// 遍历 a 中的每个 card，检查它是否在 b 中
 	for _, card := range a {
 		if _, found := bMap[card]; !found {
@@ -67,7 +38,7 @@ func (h *Hand) handSliceDifference(a, b []Card) []Card {
 // findJoker 找癞子牌
 func (h *Hand) findJoker(wild int) {
 	for _, card := range h.cards {
-		if card.Value == wild || card.Suit == JokerA || card.Suit == JokerB {
+		if card.Value == wild || card.Suit == app.JokerA || card.Suit == app.JokerB {
 			h.joker = append(h.joker, card)
 		}
 	}
@@ -75,7 +46,7 @@ func (h *Hand) findJoker(wild int) {
 }
 
 // 手牌分组
-func (h *Hand) groupCards(cards []Card) {
+func (h *Hand) groupCards(cards []app.Card) {
 	for _, card := range cards {
 		h.suitCards[card.Suit] = append(h.suitCards[card.Suit], card)
 	}
@@ -92,7 +63,7 @@ func (h *Hand) findSequences() {
 			return cards[i].Value < cards[j].Value
 		})
 
-		var sequence []Card
+		var sequence []app.Card
 		for i := 0; i < len(cards)-2; i++ {
 			if cards[i+1].Value-cards[i].Value == 1 && cards[i+2].Value-cards[i+1].Value == 1 {
 				sequence = append(sequence, cards[i:i+3]...)
@@ -106,17 +77,10 @@ func (h *Hand) findSequences() {
 	}
 }
 
-// 判断牌型
-func (h *Hand) judgeCardType() {
-	fmt.Println("手牌类型判断")
-}
-
 func (h *Hand) findGap1Cards() {
-	h.suitCards = make(map[string][]Card, 4)
+	h.suitCards = make(map[string][]app.Card, 4)
 	h.groupCards(h.invalid)
-	h.invalid = []Card{}
-
-	//fmt.Println("无效牌的分组", h.suitCards)
+	h.invalid = []app.Card{}
 
 	gapCardBlackBoard := h.judgeMostScore(h.findGapFromS2L(), h.findGapFromL2S())
 
@@ -124,8 +88,8 @@ func (h *Hand) findGap1Cards() {
 	fmt.Println("黑板")
 	for suit, gapC := range gapCardBlackBoard {
 		fmt.Printf("花色 %s 的最佳牌组: ", suit)
-		if gapC.Status == HT {
-			// HT 牌型
+		if gapC.Status == app.HT {
+			// app.HT 牌型
 			fmt.Println("首尾牌型")
 			for _, card := range gapC.Cards {
 				fmt.Printf("%d ", card.Value)
@@ -135,8 +99,8 @@ func (h *Hand) findGap1Cards() {
 			fmt.Println()
 		}
 
-		if gapC.Status == Bd {
-			// HT 牌型
+		if gapC.Status == app.Bd {
+			// app.HT 牌型
 			fmt.Println("卡隆牌型")
 			for _, card := range gapC.Cards {
 				fmt.Printf("%d ", card.Value)
@@ -145,13 +109,12 @@ func (h *Hand) findGap1Cards() {
 			fmt.Printf("癞子使用次数: %d\n", gapC.JokerUseNum)
 			fmt.Println()
 		}
-
 	}
 }
 
 // findGapFromS2L 找间隙从小到大
-func (h *Hand) findGapFromS2L() map[string]gapCard {
-	blackBoard := map[string]gapCard{}
+func (h *Hand) findGapFromS2L() map[string]app.GapCard {
+	blackBoard := map[string]app.GapCard{}
 
 	for suit, cards := range h.suitCards {
 		if len(cards) < 2 {
@@ -162,14 +125,14 @@ func (h *Hand) findGapFromS2L() map[string]gapCard {
 			return cards[i].Value < cards[j].Value
 		})
 
-		gapC := gapCard{
-			Status: NotStatus,
-			Cards:  []Card{},
+		gapC := app.GapCard{
+			Status: app.NotStatus,
+			Cards:  []app.Card{},
 		}
 
 		for i := 0; i < len(cards); i++ {
 			if len(gapC.Cards) == 0 {
-				gapC.Cards = []Card{cards[i]}
+				gapC.Cards = []app.Card{cards[i]}
 				if cards[i].Value == 1 || cards[i].Value > 10 {
 					gapC.Score += 10
 				} else {
@@ -178,24 +141,24 @@ func (h *Hand) findGapFromS2L() map[string]gapCard {
 				continue
 			}
 
-			if gapC.Status == NotStatus {
-				// HT 牌型
+			if gapC.Status == app.NotStatus {
+				// app.HT 牌型
 				if cards[i].Value == cards[i-1].Value+1 {
 					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = HT
+					gapC.Status = app.HT
 					gapC.Score += cards[i].Value
 				}
 
 				// BT 牌型
 				if cards[i].Value == cards[i-1].Value+2 {
 					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = Bd
+					gapC.Status = app.Bd
 					gapC.Score += cards[i].Value
 				}
 				continue
 			}
 
-			if gapC.Status == HT {
+			if gapC.Status == app.HT {
 				// 因为该牌已经是从小到大了， 如果已经是 2 3 下一张应该就是5 才可能是合理的间隙牌否则就是顺子了，不应该出现在这里
 				if gapC.Cards[len(gapC.Cards)-1].Value+2 == cards[i].Value && gapC.JokerUseNum == 0 {
 					// 因为假设后面还有6的情况需要兼容这个情况
@@ -223,8 +186,8 @@ func (h *Hand) findGapFromS2L() map[string]gapCard {
 }
 
 // findGapFromL2S 找间隙从大到小
-func (h *Hand) findGapFromL2S() map[string]gapCard {
-	blackBoard := map[string]gapCard{}
+func (h *Hand) findGapFromL2S() map[string]app.GapCard {
+	blackBoard := map[string]app.GapCard{}
 	for suit, cards := range h.suitCards {
 		if len(cards) < 2 {
 			h.invalid = append(h.invalid, cards...)
@@ -234,14 +197,14 @@ func (h *Hand) findGapFromL2S() map[string]gapCard {
 			return cards[i].Value > cards[j].Value
 		})
 
-		gapC := gapCard{
-			Status: NotStatus,
-			Cards:  []Card{},
+		gapC := app.GapCard{
+			Status: app.NotStatus,
+			Cards:  []app.Card{},
 		}
 
 		for i := 0; i < len(cards); i++ {
 			if len(gapC.Cards) == 0 {
-				gapC.Cards = []Card{cards[i]}
+				gapC.Cards = []app.Card{cards[i]}
 				if cards[i].Value == 1 || cards[i].Value > 10 {
 					gapC.Score += 10
 				} else {
@@ -250,25 +213,25 @@ func (h *Hand) findGapFromL2S() map[string]gapCard {
 				continue
 			}
 
-			if gapC.Status == NotStatus {
-				// HT 牌型
+			if gapC.Status == app.NotStatus {
+				// app.HT 牌型
 				if cards[i].Value == cards[i-1].Value-1 {
 					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = HT
+					gapC.Status = app.HT
 					gapC.Score += cards[i].Value
 				}
 
 				// BT 牌型
 				if cards[i].Value == cards[i-1].Value-2 {
 					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = Bd
+					gapC.Status = app.Bd
 					gapC.Score += cards[i].Value
 					gapC.JokerUseNum++
 				}
 				continue
 			}
 
-			if gapC.Status == HT {
+			if gapC.Status == app.HT {
 				if gapC.Cards[len(gapC.Cards)-1].Value-2 == cards[i].Value && gapC.JokerUseNum == 0 {
 					gapC.Cards = append(gapC.Cards, cards[i])
 					gapC.Score += cards[i].Value
@@ -283,13 +246,7 @@ func (h *Hand) findGapFromL2S() map[string]gapCard {
 			}
 
 			// BT 牌型
-			if gapC.Status == Bd {
-				//if gapC.Cards[len(gapC.Cards)-1].Value-2 == cards[i].Value && gapC.JokerUseNum == 0 {
-				//	gapC.Cards = append(gapC.Cards, cards[i])
-				//	gapC.Score += cards[i].Value
-				//	gapC.JokerUseNum++
-				//}
-
+			if gapC.Status == app.Bd {
 				if gapC.Cards[len(gapC.Cards)-1].Value-1 == cards[i].Value && gapC.JokerUseNum == 1 {
 					gapC.Cards = append(gapC.Cards, cards[i])
 					gapC.Score += cards[i].Value
@@ -307,8 +264,8 @@ func (h *Hand) findGapFromL2S() map[string]gapCard {
 }
 
 // 鉴定哪一个牌型得分最高
-func (h *Hand) judgeMostScore(S2L, L2S map[string]gapCard) map[string]gapCard {
-	blackBoard := map[string]gapCard{}
+func (h *Hand) judgeMostScore(S2L, L2S map[string]app.GapCard) map[string]app.GapCard {
+	blackBoard := map[string]app.GapCard{}
 
 	for suit, gapC := range S2L {
 		for suit2, gapC2 := range L2S {
@@ -326,14 +283,14 @@ func (h *Hand) judgeMostScore(S2L, L2S map[string]gapCard) map[string]gapCard {
 
 func main() {
 	hand := Hand{
-		cards: []Card{
-			{Value: 2, Suit: B},
-			{Value: 3, Suit: B},
+		cards: []app.Card{
+			{Value: 4, Suit: app.B},
+			{Value: 5, Suit: app.B},
 
-			{Value: 5, Suit: B},
-			{Value: 6, Suit: B},
+			{Value: 7, Suit: app.B},
+			{Value: 9, Suit: app.B},
 
-			{Value: 8, Suit: B},
+			{Value: 11, Suit: app.B},
 			//{Value: 9, Suit: B},
 			//{Value: 7, Suit: B},
 
@@ -351,7 +308,7 @@ func main() {
 			//{Value: 14, Suit: JokerA},
 			//{Value: 15, Suit: JokerB},
 		},
-		suitCards: make(map[string][]Card, 4),
+		suitCards: make(map[string][]app.Card, 4),
 	}
 	// 找癞子牌
 	hand.findJoker(0)
