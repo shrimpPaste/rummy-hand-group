@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"rummy-group-v2/pkg/app"
 	"sort"
 )
@@ -10,210 +9,114 @@ import (
 func (h *Hand) findGap1Cards() {
 	// 检测是否已经拥有两个及以上的顺子，并且没有使用过小丑牌。
 	h.suitCards = make(map[string][]app.Card, 4)
-	h.groupCards(h.invalid)
+	h.groupCards(h.suitCards, h.invalid)
 	h.invalid = []app.Card{}
 
-	gapCardBlackBoard := h.judgeMostScore(h.findGapFromS2L(), h.findGapFromL2S())
+	gapScore := map[int][]app.Card{}
 
-	fmt.Println()
-	fmt.Println("黑板")
-	for suit, gapC := range gapCardBlackBoard {
-		fmt.Printf("花色 %s 的最佳牌组: ", suit)
-		if gapC.Status == app.HT {
-			// app.HT 牌型
-			fmt.Println("首尾牌型")
-			for _, card := range gapC.Cards {
-				fmt.Printf("%d ", card.Value)
-			}
-			fmt.Println("分值", gapC.Score)
-			fmt.Printf("癞子使用次数: %d\n", gapC.JokerUseNum)
-			fmt.Println()
-		}
-
-		if gapC.Status == app.Bd {
-			// app.HT 牌型
-			fmt.Println("卡隆牌型")
-			for _, card := range gapC.Cards {
-				fmt.Printf("%d ", card.Value)
-			}
-			fmt.Println("分值", gapC.Score)
-			fmt.Printf("癞子使用次数: %d\n", gapC.JokerUseNum)
-			fmt.Println()
-		}
-	}
-}
-
-// findGapFromS2L 用于寻找手中牌中每个花色的间隙牌。（从小到大的排序）
-func (h *Hand) findGapFromS2L() map[string]app.GapCard {
-	// 初始化一个空的映射来存储每个花色的间隙牌信息。
-	blackBoard := map[string]app.GapCard{}
-
-	// 遍历每个花色及其对应的牌。
 	for suit, cards := range h.suitCards {
-		// 如果该花色的牌少于2张，则认为无法形成有效的组合，将其标记为无效牌并跳过。
 		if len(cards) < 2 {
 			h.invalid = append(h.invalid, cards...)
+			h.suitCards[suit] = []app.Card{}
 			continue
 		}
-
-		// 对牌进行排序，以便后续处理。
 		sort.Slice(cards, func(i, j int) bool {
 			return cards[i].Value < cards[j].Value
 		})
 
-		// 初始化一个间隙牌结构体。
-		gapC := app.GapCard{
-			Status: app.NotStatus,
-			Cards:  []app.Card{},
-		}
+		gapsCards := h.findGap(cards)
+		h.getCardsScore(gapsCards)
+		gapScore[h.getCardsScore(gapsCards)] = gapsCards
 
-		// 遍历每张牌，寻找可能的间隙牌组合。
-		for i := 0; i < len(cards); i++ {
-			// 如果当前间隙牌组合为空，则将当前牌加入组合中，并更新分数。
-			if len(gapC.Cards) == 0 {
-				gapC.Cards = []app.Card{cards[i]}
-				if cards[i].Value == 1 || cards[i].Value > 10 {
-					gapC.Score += 10
-				} else {
-					gapC.Score += cards[i].Value
-				}
-				continue
-			}
-
-			// 如果当前间隙牌组合的状态未确定，则尝试确定其状态。
-			if gapC.Status == app.NotStatus {
-				// 检查是否为顺子牌型。
-				if cards[i].Value == cards[i-1].Value+1 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = app.HT
-					gapC.Score += cards[i].Value
-				}
-
-				// 检查是否为间隔一牌的牌型。
-				if cards[i].Value == cards[i-1].Value+2 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = app.Bd
-					gapC.Score += cards[i].Value
-				}
-				continue
-			}
-
-			// 如果当前间隙牌组合的状态为顺子，则根据特定规则继续添加牌。
-			if gapC.Status == app.HT {
-				// 因为牌已经按从小到大的顺序排列，所以如果当前牌与组合中的最后一张牌值相差2，且未使用过小丑牌，则认为是合理的间隙牌。
-				if gapC.Cards[len(gapC.Cards)-1].Value+2 == cards[i].Value && gapC.JokerUseNum == 0 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Score += cards[i].Value
-					gapC.JokerUseNum++
-				}
-
-				// 如果已经使用过小丑牌，且当前牌与组合中的最后一张牌值相差1，则认为是合理的间隙牌。
-				if gapC.Cards[len(gapC.Cards)-1].Value+1 == cards[i].Value && gapC.JokerUseNum == 1 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Score += cards[i].Value
-				}
-				continue
-			}
-		}
-
-		// 如果最终的间隙牌组合中至少有2张牌，则将其添加到结果映射中。
-		if len(gapC.Cards) >= 2 {
-			blackBoard[suit] = gapC
-		}
+		//sequence := h.findValidSequence(cards)
+		//
+		//h.valid = append(h.valid, sequence...)
+		h.invalid = append(h.invalid, h.handSliceDifference(cards, gapsCards)...)
+		//
+		//h.suitCards[suit] = []app.Card{}
+	}
+	for _, joker := range h.joker {
+		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
+		h.valid = append(h.valid, bestCards...)
+		h.valid = append(h.valid, joker)
+		h.joker = h.joker[1:]
+		gapScore = g
 	}
 
-	// 返回结果映射。
-	return blackBoard
+	for _, cards := range gapScore {
+		h.invalid = append(h.invalid, cards...)
+	}
 }
 
-// findGapFromL2S 分析手牌中每个花色的卡片，找出可能的断牌组合。(从大到小的排序）
-func (h *Hand) findGapFromL2S() map[string]app.GapCard {
-	// 初始化一个映射来存储每种花色的断牌信息。
-	blackBoard := map[string]app.GapCard{}
+func (h *Hand) findAndRemoveMaxGapScore(gapScore map[int][]app.Card) ([]app.Card, map[int][]app.Card) {
+	var maxKey int
+	var maxCards []app.Card
 
-	// 遍历每种花色的卡片。
-	for suit, cards := range h.suitCards {
-		// 如果该花色的卡片少于2张，则认为无法形成有效的断牌组合，将其标记为无效。
-		if len(cards) < 2 {
-			h.invalid = append(h.invalid, cards...)
-			continue
-		}
-
-		// 对卡片进行降序排列，以便后续处理。
-		sort.Slice(cards, func(i, j int) bool {
-			return cards[i].Value > cards[j].Value
-		})
-
-		// 初始化一个断牌组合信息结构体。
-		gapC := app.GapCard{
-			Status: app.NotStatus,
-			Cards:  []app.Card{},
-		}
-
-		// 遍历每张卡片，寻找断牌组合。
-		for i := 0; i < len(cards); i++ {
-			// 如果当前断牌组合中没有卡片，则将当前卡片加入组合中，并计算其分数。
-			if len(gapC.Cards) == 0 {
-				gapC.Cards = []app.Card{cards[i]}
-				if cards[i].Value == 1 || cards[i].Value > 10 {
-					gapC.Score += 10
-				} else {
-					gapC.Score += cards[i].Value
-				}
-				continue
-			}
-
-			// 如果当前断牌组合的状态未确定，则检查是否可以形成HT或BT牌型。
-			if gapC.Status == app.NotStatus {
-				// 检查是否可以形成HT牌型。
-				if cards[i].Value == cards[i-1].Value-1 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = app.HT
-					gapC.Score += cards[i].Value
-				}
-
-				// 检查是否可以形成BT牌型。
-				if cards[i].Value == cards[i-1].Value-2 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Status = app.Bd
-					gapC.Score += cards[i].Value
-					gapC.JokerUseNum++
-				}
-				continue
-			}
-
-			// 如果当前断牌组合的状态是HT，则检查是否可以继续添加卡片到组合中。
-			if gapC.Status == app.HT {
-				// 检查是否可以将当前卡片添加到HT组合中，根据是否已经使用过小丑来决定。
-				if gapC.Cards[len(gapC.Cards)-1].Value-2 == cards[i].Value && gapC.JokerUseNum == 0 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Score += cards[i].Value
-					gapC.JokerUseNum++
-				}
-
-				if gapC.Cards[len(gapC.Cards)-1].Value-1 == cards[i].Value && gapC.JokerUseNum == 1 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Score += cards[i].Value
-				}
-				continue
-			}
-
-			// 如果当前断牌组合的状态是BT，则检查是否可以继续添加卡片到组合中。
-			if gapC.Status == app.Bd {
-				// 检查是否可以将当前卡片添加到BT组合中，根据是否已经使用过小丑来决定。
-				if gapC.Cards[len(gapC.Cards)-1].Value-1 == cards[i].Value && gapC.JokerUseNum == 1 {
-					gapC.Cards = append(gapC.Cards, cards[i])
-					gapC.Score += cards[i].Value
-				}
-			}
-		}
-
-		// 将最后一个断牌组合信息添加到结果映射中。
-		if len(gapC.Cards) >= 2 {
-			blackBoard[suit] = gapC
+	// 遍历 map，找到最大键值
+	for key, cards := range gapScore {
+		if key > maxKey {
+			maxKey = key
+			maxCards = cards
 		}
 	}
 
-	// 返回结果映射。
-	return blackBoard
+	// 删除最大键值对应的 entry
+	delete(gapScore, maxKey)
+
+	return maxCards, gapScore
+}
+
+// getCardsScore 获取当前卡组分数
+func (h *Hand) getCardsScore(cards []app.Card) int {
+	score := 0
+	for _, gap := range cards {
+		if gap.Value > 10 || gap.Value == 1 {
+			score += 10
+			continue
+		}
+		score += gap.Value
+	}
+	return score
+}
+
+// findValidSequence 找出当前花色中的顺子
+func (h *Hand) findGap(cards []app.Card) (result []app.Card) {
+	for i := 0; i < len(cards); i++ {
+		if len(result) < 2 && len(cards[i:]) >= 2 {
+			result = h.findGapFromCards([]app.Card{}, cards[i:], false)
+		}
+	}
+	return
+}
+
+// 递归数组找到连续的值
+func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.Card {
+	if len(cards) < 2 { // 如果剩余牌数不足，返回当前结果
+		return result
+	}
+
+	// 初始化结果集（第一次调用时）
+	if len(result) == 0 {
+		result = append(result, cards[0])
+	}
+
+	if result[len(result)-1].Value == 1 && cards[1].Value == 13 {
+		result = append(result, cards[1])
+	}
+	if result[len(result)-1].Value == 1 && cards[1].Value == 12 {
+		result = append(result, cards[1])
+		usedGap2 = true
+	}
+
+	// 检查下一张牌是否连续
+	if cards[1].Value == result[len(result)-1].Value+1 {
+		result = append(result, cards[1])
+	}
+	if cards[1].Value == result[len(result)-1].Value+2 && !usedGap2 {
+		result = append(result, cards[1])
+		usedGap2 = true
+	}
+
+	// 递归调用，从下一张牌开始检查
+	return h.findGapFromCards(result, cards[1:], usedGap2)
 }

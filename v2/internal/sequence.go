@@ -21,8 +21,11 @@ func (h *Hand) findSequences() {
 
 		sequence := h.findValidSequence(cards)
 
-		h.valid = append(h.valid, sequence...)
-		h.invalid = append(h.invalid, h.handSliceDifference(cards, sequence)...)
+		if len(sequence) < 3 {
+			h.invalid = append(h.invalid, cards...)
+		} else {
+			h.valid = append(h.valid, sequence...)
+		}
 
 		h.suitCards[suit] = []app.Card{}
 	}

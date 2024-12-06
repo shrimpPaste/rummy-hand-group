@@ -11,6 +11,15 @@ func (h *Hand) judgeIsHave2Seq() bool {
 	return false
 }
 
+// 鉴定牌型是否有一个及以上的顺子
+func (h *Hand) judgeIsHave1Seq() bool {
+	// 该函数调用应该在第一轮找顺子的时候判断
+	if len(h.valid) >= 3 {
+		return true
+	}
+	return false
+}
+
 // 鉴定哪一个牌型得分最高
 func (h *Hand) judgeMostScore(S2L, L2S map[string]app.GapCard) map[string]app.GapCard {
 	blackBoard := map[string]app.GapCard{}
