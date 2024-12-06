@@ -28,18 +28,20 @@ func (h *Hand) findGap1Cards() {
 		if len(gapsCards) >= 2 {
 			h.getCardsScore(gapsCards)
 			gapScore[h.getCardsScore(gapsCards)] = gapsCards
+			h.invalid = append(h.invalid, h.handSliceDifference(cards, gapsCards)...)
+		} else {
+			h.invalid = append(h.invalid, cards...)
 		}
-
-		h.invalid = append(h.invalid, cards...)
 	}
 
-	//fmt.Println("gapScore", gapScore)
 	for _, joker := range h.joker {
 		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
-		h.valid = append(h.valid, bestCards...)
-		h.valid = append(h.valid, joker)
-		h.joker = h.joker[1:]
-		gapScore = g
+		if len(bestCards) > 0 {
+			h.valid = append(h.valid, bestCards...)
+			h.valid = append(h.valid, joker)
+			h.joker = h.removeByIndex(h.joker, 0)
+			gapScore = g
+		}
 	}
 
 	for _, cards := range gapScore {
@@ -88,17 +90,10 @@ func (h *Hand) findGap(cards []app.Card) (result []app.Card) {
 	return
 }
 
-// findValidSequence 找出当前花色中的顺子
-func (h *Hand) findGap2(cards []app.Card) (result []app.Card) {
-	for i := 0; i < len(cards); i++ {
-		if len(result) < 2 && len(cards[i:]) >= 2 {
-			result = h.findGapFromCards([]app.Card{}, cards[i:], false)
-		}
-	}
-	return
-}
-
 func (h *Hand) removeByIndex(arr []app.Card, index int) []app.Card {
+	if index < 0 || index >= len(arr) {
+		return []app.Card{}
+	}
 	return append(arr[:index], arr[index+1:]...)
 }
 
@@ -111,28 +106,25 @@ func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.C
 	// 初始化结果集（第一次调用时）
 	if len(result) == 0 {
 		result = append(result, cards[0])
+		cards = cards[1:]
 	}
 
 	if result[len(result)-1].Value == 1 {
-		isUsd := false
 		for index, card := range cards {
-			if card.Value == 13 || card.Value == 12 {
-				result = append(result, card)
+			if (card.Value == 13 || card.Value == 12) && len(cards) > 2 {
 				cards = h.removeByIndex(cards, index)
-				isUsd = true
+				result = append(result, card)
 			}
 		}
-		if isUsd {
-			h.findGapFromCards(result, cards[1:], usedGap2)
-		}
+		return result
 	}
 
 	// 检查下一张牌是否连续
-	if cards[1].Value == result[len(result)-1].Value+1 {
-		result = append(result, cards[1])
+	if cards[0].Value == result[len(result)-1].Value+1 {
+		result = append(result, cards[0])
 	}
-	if cards[1].Value == result[len(result)-1].Value+2 && !usedGap2 {
-		result = append(result, cards[1])
+	if cards[0].Value == result[len(result)-1].Value+2 && !usedGap2 {
+		result = append(result, cards[0])
 		usedGap2 = true
 	}
 
