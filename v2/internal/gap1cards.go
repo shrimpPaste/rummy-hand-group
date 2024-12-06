@@ -25,16 +25,15 @@ func (h *Hand) findGap1Cards() {
 		})
 
 		gapsCards := h.findGap(cards)
-		h.getCardsScore(gapsCards)
-		gapScore[h.getCardsScore(gapsCards)] = gapsCards
+		if len(gapsCards) >= 2 {
+			h.getCardsScore(gapsCards)
+			gapScore[h.getCardsScore(gapsCards)] = gapsCards
+		}
 
-		//sequence := h.findValidSequence(cards)
-		//
-		//h.valid = append(h.valid, sequence...)
-		h.invalid = append(h.invalid, h.handSliceDifference(cards, gapsCards)...)
-		//
-		//h.suitCards[suit] = []app.Card{}
+		h.invalid = append(h.invalid, cards...)
 	}
+
+	//fmt.Println("gapScore", gapScore)
 	for _, joker := range h.joker {
 		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
 		h.valid = append(h.valid, bestCards...)
@@ -89,6 +88,20 @@ func (h *Hand) findGap(cards []app.Card) (result []app.Card) {
 	return
 }
 
+// findValidSequence 找出当前花色中的顺子
+func (h *Hand) findGap2(cards []app.Card) (result []app.Card) {
+	for i := 0; i < len(cards); i++ {
+		if len(result) < 2 && len(cards[i:]) >= 2 {
+			result = h.findGapFromCards([]app.Card{}, cards[i:], false)
+		}
+	}
+	return
+}
+
+func (h *Hand) removeByIndex(arr []app.Card, index int) []app.Card {
+	return append(arr[:index], arr[index+1:]...)
+}
+
 // 递归数组找到连续的值
 func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.Card {
 	if len(cards) < 2 { // 如果剩余牌数不足，返回当前结果
@@ -100,12 +113,18 @@ func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.C
 		result = append(result, cards[0])
 	}
 
-	if result[len(result)-1].Value == 1 && cards[1].Value == 13 {
-		result = append(result, cards[1])
-	}
-	if result[len(result)-1].Value == 1 && cards[1].Value == 12 {
-		result = append(result, cards[1])
-		usedGap2 = true
+	if result[len(result)-1].Value == 1 {
+		isUsd := false
+		for index, card := range cards {
+			if card.Value == 13 || card.Value == 12 {
+				result = append(result, card)
+				cards = h.removeByIndex(cards, index)
+				isUsd = true
+			}
+		}
+		if isUsd {
+			h.findGapFromCards(result, cards[1:], usedGap2)
+		}
 	}
 
 	// 检查下一张牌是否连续
