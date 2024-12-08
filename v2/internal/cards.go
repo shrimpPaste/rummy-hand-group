@@ -172,7 +172,7 @@ func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 	h.findGap1Cards()
 
 	// 找刻子
-	//h.find111Cards()
+	h.find111Cards()
 
 	return h.valid, h.invalid
 }

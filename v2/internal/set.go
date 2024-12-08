@@ -14,7 +14,9 @@ func (h *Hand) find111Cards() {
 		h.joker = h.joker[2:]
 	}
 
+	// todo::他只能找无效牌但是不能找到有效牌的
 	setCards := h.findSetFromCards([]app.Card{}, h.invalid)
+	// todo::找出一个花色中的刻子，一张牌应该怎么处理，两张牌怎么处理
 
 	if len(h.joker) > 1 {
 		h.valid = append(h.valid, setCards...)
