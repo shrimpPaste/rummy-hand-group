@@ -80,7 +80,7 @@ func (h *Hand) getCardsScore(cards []app.Card) int {
 	return score
 }
 
-// findValidSequence 找出当前花色中的顺子
+// findGap 找出当前花色中的顺子
 func (h *Hand) findGap(cards []app.Card) (result []app.Card) {
 	for i := 0; i < len(cards); i++ {
 		if len(result) < 2 && len(cards[i:]) >= 2 {
@@ -99,6 +99,12 @@ func (h *Hand) removeByIndex(arr []app.Card, index int) []app.Card {
 
 // 递归数组找到连续的值
 func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.Card {
+	if len(cards) == 1 {
+		if cards[0].Value == result[len(result)-1].Value+1 {
+			result = append(result, cards...)
+		}
+		return result
+	}
 	if len(cards) < 2 { // 如果剩余牌数不足，返回当前结果
 		return result
 	}

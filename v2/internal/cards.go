@@ -151,7 +151,7 @@ func (h *Hand) Run(r *gin.Engine) {
 	//h.findGap1Cards()
 }
 
-func (h *Hand) RunTest() ([]app.Card, []app.Card) {
+func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 	// 初始化手牌
 	h.initHand()
 	// 分组
@@ -164,7 +164,8 @@ func (h *Hand) RunTest() ([]app.Card, []app.Card) {
 		return h.valid, h.invalid
 	}
 	// 找癞子
-	h.findInvalidJoker(6)
+	h.findInvalidJoker(wild)
+	// todo:: 这里没有把是赖子的6找出来
 	if len(h.joker) < 2 && !h.judgeIsHave1Seq() {
 		fmt.Println("没有找到足够的癞子牌支持组成第二组顺子")
 		return h.valid, h.invalid
