@@ -37,8 +37,12 @@ func (h *Hand) findGap1Cards() {
 	for _, joker := range h.joker {
 		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
 		if len(bestCards) > 0 {
-			h.valid = append(h.valid, bestCards...)
-			h.valid = append(h.valid, joker)
+			bestCards = append(bestCards, joker)
+
+			h.pureWithJoker = append(h.pureWithJoker, bestCards)
+
+			h.invalid = h.handSliceDifference(h.invalid, bestCards)
+
 			h.joker = h.removeByIndex(h.joker, 0)
 			gapScore = g
 		}

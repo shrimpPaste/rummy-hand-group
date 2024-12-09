@@ -19,7 +19,6 @@ func (h *Hand) findInvalidJoker(wild int) {
 	var tJoker []app.Card
 	var tSeq []app.Card
 
-	// todo::从有效牌当中找到joker牌并且取出来还是pure的顺子
 	for _, card := range h.valid {
 		if card.Value == wild {
 			tJoker = append(tJoker, card)
@@ -38,6 +37,8 @@ func (h *Hand) findInvalidJoker(wild int) {
 		return
 	}
 
-	h.joker = append(h.joker, h.handSliceDifference(h.valid, tSeq)...)
-	h.valid = h.handSliceIntersection(h.valid, tSeq)
+	h.pure = append(h.pure, h.handSliceIntersection(h.valid, tSeq))
+	h.valid = h.handSliceDifference(h.valid, append(tJoker, tSeq...))
+	h.joker = append(h.joker, tJoker...)
+
 }

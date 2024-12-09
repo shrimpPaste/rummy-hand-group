@@ -16,9 +16,35 @@ func (h *Hand) find111Cards() {
 
 	setCards := h.findSetFromCards([]app.Card{}, h.invalid)
 
-	if len(h.joker) > 1 {
-		h.valid = append(h.valid, setCards...)
-		h.valid = append(h.valid, h.joker[0])
+	if len(setCards) < 0 {
+		return
+	}
+
+	for i, p := range h.pure {
+		tSet := app.Card{}
+		if p[0].Value == setCards[0].Value && p[0].Suit != setCards[0].Suit && h.judgeIsSeq(p[1:]) {
+			tSet = p[0]
+		}
+		if p[len(p)-1].Value == setCards[0].Value && p[0].Suit != setCards[0].Suit && h.judgeIsSeq(p[:len(p)-1]) {
+			tSet = p[len(p)-1]
+		}
+		setCards = append(setCards, tSet)
+		if len(setCards) >= 3 {
+			h.invalid = h.handSliceDifference(h.invalid, setCards)
+			h.set = append(h.set, setCards)
+			h.pure[i] = h.handSliceDifference(h.pure[i], []app.Card{tSet})
+		}
+	}
+
+	// todo::从间隙牌中找刻子
+
+	if len(setCards) >= 3 {
+		return
+	}
+
+	if len(h.joker) > 1 && len(setCards) >= 2 {
+		setCards = append(setCards, h.joker[0])
+		h.setWithJoker = append(h.setWithJoker, setCards)
 		h.joker = h.removeByIndex(h.joker, 1)
 		h.invalid = h.handSliceDifference(h.invalid, setCards)
 	}
