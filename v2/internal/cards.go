@@ -183,6 +183,7 @@ func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 	h.findInvalidJoker(wild)
 
 	if len(h.joker) < 1 && !h.judgeIsHave1Seq() {
+		fmt.Println("pure", h.GetPure())
 		fmt.Println("没有找到足够的癞子牌支持组成第二组顺子")
 		return h.valid, h.invalid
 	}

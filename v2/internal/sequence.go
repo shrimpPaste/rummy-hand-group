@@ -55,6 +55,21 @@ func (h *Hand) findSequenceFromCards(result, cards []app.Card) []app.Card {
 		result = append(result, cards[0])
 	}
 
+	if result[len(result)-1].Value == 1 {
+		for _, card := range cards {
+			if card.Value == 13 || card.Value == 12 {
+				result = append(result, card)
+			}
+		}
+		if len(result) >= 3 {
+			cards = h.handSliceDifference(cards, result)
+		}
+		if len(cards) < 2 {
+			return result
+		}
+		return h.findSequenceFromCards(result, cards[1:])
+	}
+
 	// 检查下一张牌是否连续
 	if cards[1].Value == result[len(result)-1].Value+1 {
 		result = append(result, cards[1])
