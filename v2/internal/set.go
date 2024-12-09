@@ -30,6 +30,9 @@ func (h *Hand) find111Cards() {
 		h.groupCards(pureSuitCards, p)
 
 		for _, cards := range pureSuitCards {
+			if len(setCards) <= 0 {
+				continue
+			}
 			tSet := app.Card{}
 			for j, p1 := range cards {
 				if p1.Value == setCards[0].Value && p1.Suit != setCards[0].Suit {
@@ -57,6 +60,7 @@ func (h *Hand) find111Cards() {
 			if len(setCards) >= 3 {
 				h.invalid = h.handSliceDifference(h.invalid, setCards)
 				h.set = append(h.set, setCards)
+				setCards = []app.Card{}
 			}
 		}
 	}
