@@ -8,12 +8,16 @@ import (
 
 // Hand 手牌
 type Hand struct {
-	cards     []app.Card
-	joker     []app.Card
-	valid     []app.Card
-	invalid   []app.Card
-	gap1Cards []app.Card // 间隙为1的牌
-	suitCards map[string][]app.Card
+	cards         []app.Card
+	joker         []app.Card
+	valid         []app.Card
+	pure          [][]app.Card
+	pureWithJoker [][]app.Card
+	set           [][]app.Card
+	setWithJoker  [][]app.Card
+	invalid       []app.Card
+	gap1Cards     []app.Card // 间隙为1的牌
+	suitCards     map[string][]app.Card
 }
 
 func (h *Hand) SetCards(cards []app.Card) {
@@ -22,6 +26,20 @@ func (h *Hand) SetCards(cards []app.Card) {
 
 func (h *Hand) GetCards() []app.Card {
 	return h.cards
+}
+func (h *Hand) GetPure() [][]app.Card {
+	return h.pure
+}
+func (h *Hand) GetPureWithJoker() [][]app.Card {
+	return h.pureWithJoker
+}
+
+func (h *Hand) GetSet() [][]app.Card {
+	return h.set
+}
+
+func (h *Hand) GetSetWithJoker() [][]app.Card {
+	return h.setWithJoker
 }
 
 // initHand 初始化手牌
@@ -86,7 +104,7 @@ func (h *Hand) initHand() {
 
 func (h *Hand) Run(r *gin.Engine) {
 	// 初始化手牌
-	h.initHand()
+	//h.initHand()
 	// 分组
 	h.groupCards(h.suitCards, h.cards)
 	// 找顺子
@@ -158,14 +176,14 @@ func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 	h.findSequences()
 	// 第一轮鉴定
 	if !h.judgeIsHave1Seq() {
-		fmt.Println("没有找到一个无赖字的同花顺子")
+		//fmt.Println("Waring::没有找到一个无赖字的同花顺子")
 		return h.valid, h.invalid
 	}
 	// 找癞子
 	h.findInvalidJoker(wild)
 
-	if len(h.joker) < 2 && !h.judgeIsHave1Seq() {
-		fmt.Println("没有找到足够的癞子牌支持组成第二组顺子")
+	if len(h.joker) < 1 && !h.judgeIsHave2Seq() {
+		//fmt.Println("Waring::没有找到足够的癞子牌支持组成第二组顺子")
 		return h.valid, h.invalid
 	}
 	// 有癞子找间隙牌
@@ -179,11 +197,15 @@ func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 
 func NewHand() *Hand {
 	return &Hand{
-		cards:     []app.Card{},
-		joker:     []app.Card{},
-		valid:     []app.Card{},
-		invalid:   []app.Card{},
-		gap1Cards: []app.Card{},
-		suitCards: make(map[string][]app.Card, 4),
+		cards:         []app.Card{},
+		pure:          make([][]app.Card, 0),
+		pureWithJoker: make([][]app.Card, 0),
+		set:           make([][]app.Card, 0),
+		setWithJoker:  make([][]app.Card, 0),
+		joker:         []app.Card{},
+		valid:         []app.Card{},
+		invalid:       []app.Card{},
+		gap1Cards:     []app.Card{},
+		suitCards:     make(map[string][]app.Card, 4),
 	}
 }

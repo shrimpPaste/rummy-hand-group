@@ -46,3 +46,15 @@ func (h *Hand) groupCards(suitCards map[string][]app.Card, cards []app.Card) {
 		suitCards[card.Suit] = append(suitCards[card.Suit], card)
 	}
 }
+
+func (h *Hand) calculateScore(cards []app.Card) int {
+	score := 0
+	for _, card := range cards {
+		if card.Value == 1 || card.Value > 10 {
+			score += 10
+		} else {
+			score += card.Value
+		}
+	}
+	return score
+}

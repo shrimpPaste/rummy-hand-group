@@ -7,10 +7,17 @@ import (
 
 // 鉴定牌型是否有两个及以上的顺子
 func (h *Hand) judgeIsHave2Seq() bool {
-	// 该函数调用应该在第一轮找顺子的时候判断
-	if len(h.valid) > 6 {
-		return true
+	for _, p := range h.pure {
+		// 给pure顺子按照花色分组
+		pureSuitCards := map[string][]app.Card{}
+		h.groupCards(pureSuitCards, p)
+
+		// 该函数调用应该在第一轮找顺子的时候判断
+		if len(pureSuitCards) >= 2 {
+			return true
+		}
 	}
+
 	return false
 }
 

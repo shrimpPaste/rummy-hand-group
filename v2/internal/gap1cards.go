@@ -24,21 +24,18 @@ func (h *Hand) findGap1Cards() {
 			return cards[i].Value < cards[j].Value
 		})
 
-		gapsCards := h.findGap(cards)
-		if len(gapsCards) >= 2 {
-			h.getCardsScore(gapsCards)
-			gapScore[h.getCardsScore(gapsCards)] = gapsCards
-			h.invalid = append(h.invalid, h.handSliceDifference(cards, gapsCards)...)
-		} else {
-			h.invalid = append(h.invalid, cards...)
-		}
+		gapScore = h.handleGapsCards(cards, gapScore)
 	}
 
 	for _, joker := range h.joker {
 		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
 		if len(bestCards) > 0 {
-			h.valid = append(h.valid, bestCards...)
-			h.valid = append(h.valid, joker)
+			bestCards = append(bestCards, joker)
+
+			h.pureWithJoker = append(h.pureWithJoker, bestCards)
+
+			h.invalid = h.handSliceDifference(h.invalid, bestCards)
+
 			h.joker = h.removeByIndex(h.joker, 0)
 			gapScore = g
 		}
@@ -47,6 +44,30 @@ func (h *Hand) findGap1Cards() {
 	for _, cards := range gapScore {
 		h.invalid = append(h.invalid, cards...)
 	}
+}
+
+// handleGapsCards 处理间隙数据
+func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) map[int][]app.Card {
+	if len(cards) < 2 {
+		h.invalid = append(h.invalid, cards...)
+		return gapScore
+	}
+
+	gapsCards := h.findGap(cards)
+
+	if len(gapsCards) >= 2 {
+		gapScore[h.calculateScore(gapsCards)] = gapsCards
+	}
+
+	if len(gapsCards) < 2 {
+		h.invalid = append(h.invalid, cards...)
+		return gapScore
+	}
+
+	overCards := h.handSliceDifference(cards, gapsCards)
+	gapScore = h.handleGapsCards(overCards, gapScore)
+
+	return gapScore
 }
 
 func (h *Hand) findAndRemoveMaxGapScore(gapScore map[int][]app.Card) ([]app.Card, map[int][]app.Card) {
@@ -65,19 +86,6 @@ func (h *Hand) findAndRemoveMaxGapScore(gapScore map[int][]app.Card) ([]app.Card
 	delete(gapScore, maxKey)
 
 	return maxCards, gapScore
-}
-
-// getCardsScore 获取当前卡组分数
-func (h *Hand) getCardsScore(cards []app.Card) int {
-	score := 0
-	for _, gap := range cards {
-		if gap.Value > 10 || gap.Value == 1 {
-			score += 10
-			continue
-		}
-		score += gap.Value
-	}
-	return score
 }
 
 // findGap 找出当前花色中的顺子
