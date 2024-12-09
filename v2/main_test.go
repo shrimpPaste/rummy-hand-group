@@ -471,3 +471,63 @@ func TestStraight7(t *testing.T) {
 		t.Errorf("invalid %v", invalid)
 	}
 }
+func TestStraight8(t *testing.T) {
+	h := internal.NewHand()
+	h.SetCards([]app.Card{
+		{Suit: app.D, Value: 12},
+		{Suit: app.D, Value: 13},
+		{Suit: app.D, Value: 10},
+		{Suit: app.D, Value: 11},
+		{Suit: app.D, Value: 8},
+
+		{Suit: app.C, Value: 8},
+		{Suit: app.C, Value: 2},
+
+		{Suit: app.B, Value: 6},
+		{Suit: app.B, Value: 7},
+		{Suit: app.B, Value: 8},
+
+		{Suit: app.A, Value: 12},
+		{Suit: app.A, Value: 9},
+		{Suit: app.A, Value: 11},
+	})
+
+	_, invalid := h.RunTest(2)
+	resCards := judgeCardLength(t, h, invalid)
+
+	want := []app.Card{
+		{Suit: app.D, Value: 12},
+		{Suit: app.D, Value: 13},
+		{Suit: app.D, Value: 10},
+		{Suit: app.D, Value: 11},
+
+		{Suit: app.A, Value: 12},
+		{Suit: app.A, Value: 9},
+		{Suit: app.A, Value: 11},
+		{Suit: app.C, Value: 2},
+
+		{Suit: app.B, Value: 6},
+		{Suit: app.B, Value: 7},
+		{Suit: app.B, Value: 8},
+	}
+
+	wantI := []app.Card{
+		{Suit: app.D, Value: 8},
+		{Suit: app.C, Value: 8},
+	}
+
+	realCards := handSliceDifference(resCards, invalid)
+	res := handSliceDifference(want, realCards)
+	if len(want) != len(realCards) {
+		t.Errorf("理想长度 %v; \n 实际长度: %v", len(want), len(realCards))
+		t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", want, realCards, res)
+		t.Errorf("invalid %v", invalid)
+	}
+
+	res2 := handSliceDifference(wantI, invalid)
+	if res != nil {
+		t.Errorf("理想长度 %v; \n 实际长度: %v", len(wantI), len(invalid))
+		t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", wantI, invalid, res2)
+		t.Errorf("invalid %v", invalid)
+	}
+}

@@ -56,8 +56,7 @@ func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) ma
 	gapsCards := h.findGap(cards)
 
 	if len(gapsCards) >= 2 {
-		h.getCardsScore(gapsCards)
-		gapScore[h.getCardsScore(gapsCards)] = gapsCards
+		gapScore[h.calculateScore(gapsCards)] = gapsCards
 	}
 
 	if len(gapsCards) < 2 {
@@ -87,19 +86,6 @@ func (h *Hand) findAndRemoveMaxGapScore(gapScore map[int][]app.Card) ([]app.Card
 	delete(gapScore, maxKey)
 
 	return maxCards, gapScore
-}
-
-// getCardsScore 获取当前卡组分数
-func (h *Hand) getCardsScore(cards []app.Card) int {
-	score := 0
-	for _, gap := range cards {
-		if gap.Value > 10 || gap.Value == 1 {
-			score += 10
-			continue
-		}
-		score += gap.Value
-	}
-	return score
 }
 
 // findGap 找出当前花色中的顺子

@@ -25,22 +25,39 @@ func (h *Hand) find111Cards() {
 		if len(p) <= 3 {
 			continue
 		}
+		// 给pure顺子按照花色分组
+		pureSuitCards := map[string][]app.Card{}
+		h.groupCards(pureSuitCards, p)
 
-		tSet := app.Card{}
-		for j, p1 := range p {
-			if p1.Value == setCards[0].Value && p1.Suit != setCards[0].Suit {
-				resPure := h.removeByIndex(p, j)
-				// 检测切分后是否是合法的顺子
-				if h.judgeIsSeq(resPure) {
-					h.pure[i] = resPure
-					tSet = p1
-					setCards = append(setCards, tSet)
+		for _, cards := range pureSuitCards {
+			tSet := app.Card{}
+			for j, p1 := range cards {
+				if p1.Value == setCards[0].Value && p1.Suit != setCards[0].Suit {
+					resPure := h.removeByIndex(cards, j)
+					// 检测切分后是否是合法的顺子
+					if h.judgeIsSeq(resPure) {
+						h.pure[i] = resPure
+						tSet = p1
+						setCards = append(setCards, tSet)
+					} else {
+						// 如果抽离后分数比较高的话也可以抽离
+						if len(pureSuitCards) >= 2 {
+							score1 := h.calculateScore(cards)
+							score2 := h.calculateScore(setCards)
+							if score1 < score2 {
+								// 可以抽离
+								h.pure[i] = resPure
+								tSet = p1
+								setCards = append(setCards, tSet)
+							}
+						}
+					}
 				}
 			}
-		}
-		if len(setCards) >= 3 {
-			h.invalid = h.handSliceDifference(h.invalid, setCards)
-			h.set = append(h.set, setCards)
+			if len(setCards) >= 3 {
+				h.invalid = h.handSliceDifference(h.invalid, setCards)
+				h.set = append(h.set, setCards)
+			}
 		}
 	}
 	if len(setCards) >= 3 {
