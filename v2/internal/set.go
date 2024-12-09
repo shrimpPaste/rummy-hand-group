@@ -18,10 +18,10 @@ func (h *Hand) find111Cards() {
 	setCards := h.findSetFromCards([]app.Card{}, h.invalid)
 	// todo::找出一个花色中的刻子，一张牌应该怎么处理，两张牌怎么处理
 
-	overCards := h.handSliceDifference(h.invalid, setCards)
-	if len(overCards) >= 2 {
-		setCards = h.findSetFromCards([]app.Card{}, overCards)
-	}
+	//overCards := h.handSliceDifference(h.invalid, setCards)
+	//if len(overCards) >= 2 {
+	//	setCards = h.findSetFromCards([]app.Card{}, overCards)
+	//}
 
 	for i, p := range h.pure {
 		if len(p) <= 3 {
@@ -66,6 +66,47 @@ func (h *Hand) find111Cards() {
 			}
 		}
 	}
+
+	for i, p := range h.pureWithJoker {
+		// 给pureWithJoker顺子按照花色分组
+		pureWithJokerSuitCards := map[string][]app.Card{}
+		h.groupCards(pureWithJokerSuitCards, p)
+
+		for suit, cards := range pureWithJokerSuitCards {
+			for _, card := range cards {
+				if card.Suit == app.JokerB || card.Suit == app.JokerA || card.Value == h.wild.Value {
+					h.joker = append(h.joker, card)
+					pureWithJokerSuitCards[suit] = h.handSliceDifference(cards, []app.Card{card})
+					continue
+				}
+				if card.Value == setCards[0].Value {
+					isAs := false
+					for _, set := range setCards {
+						if set.Suit == card.Suit {
+							isAs = true
+						}
+					}
+					if !isAs {
+						score1 := h.calculateScore(cards)
+						score2 := h.calculateScore(setCards)
+						if score1 <= score2 {
+							// 可以抽离
+							invalid := h.handSliceDifference(cards, []app.Card{card})
+							h.invalid = append(h.invalid, invalid...)
+							setCards = append(setCards, card)
+							h.pureWithJoker[i] = setCards
+						}
+					}
+				}
+			}
+		}
+		if len(setCards) >= 3 {
+			h.invalid = h.handSliceDifference(h.invalid, setCards)
+			h.set = append(h.set, setCards)
+			setCards = []app.Card{}
+		}
+	}
+
 	if len(setCards) >= 3 {
 		return
 	}
