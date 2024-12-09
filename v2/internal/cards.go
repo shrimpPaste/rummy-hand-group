@@ -104,7 +104,7 @@ func (h *Hand) initHand() {
 
 func (h *Hand) Run(r *gin.Engine) {
 	// 初始化手牌
-	h.initHand()
+	//h.initHand()
 	// 分组
 	h.groupCards(h.suitCards, h.cards)
 	// 找顺子
@@ -176,15 +176,14 @@ func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 	h.findSequences()
 	// 第一轮鉴定
 	if !h.judgeIsHave1Seq() {
-		fmt.Println("没有找到一个无赖字的同花顺子")
+		//fmt.Println("Waring::没有找到一个无赖字的同花顺子")
 		return h.valid, h.invalid
 	}
 	// 找癞子
 	h.findInvalidJoker(wild)
 
 	if len(h.joker) < 1 && !h.judgeIsHave1Seq() {
-		fmt.Println("pure", h.GetPure())
-		fmt.Println("没有找到足够的癞子牌支持组成第二组顺子")
+		//fmt.Println("Waring::没有找到足够的癞子牌支持组成第二组顺子")
 		return h.valid, h.invalid
 	}
 	// 有癞子找间隙牌

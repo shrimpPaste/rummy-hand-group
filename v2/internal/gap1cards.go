@@ -24,14 +24,7 @@ func (h *Hand) findGap1Cards() {
 			return cards[i].Value < cards[j].Value
 		})
 
-		gapsCards := h.findGap(cards)
-		if len(gapsCards) >= 2 {
-			h.getCardsScore(gapsCards)
-			gapScore[h.getCardsScore(gapsCards)] = gapsCards
-			h.invalid = append(h.invalid, h.handSliceDifference(cards, gapsCards)...)
-		} else {
-			h.invalid = append(h.invalid, cards...)
-		}
+		gapScore = h.handleGapsCards(cards, gapScore)
 	}
 
 	for _, joker := range h.joker {
@@ -51,6 +44,31 @@ func (h *Hand) findGap1Cards() {
 	for _, cards := range gapScore {
 		h.invalid = append(h.invalid, cards...)
 	}
+}
+
+// handleGapsCards 处理间隙数据
+func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) map[int][]app.Card {
+	if len(cards) < 2 {
+		h.invalid = append(h.invalid, cards...)
+		return gapScore
+	}
+
+	gapsCards := h.findGap(cards)
+
+	if len(gapsCards) >= 2 {
+		h.getCardsScore(gapsCards)
+		gapScore[h.getCardsScore(gapsCards)] = gapsCards
+	}
+
+	if len(gapsCards) < 2 {
+		h.invalid = append(h.invalid, cards...)
+		return gapScore
+	}
+
+	overCards := h.handSliceDifference(cards, gapsCards)
+	gapScore = h.handleGapsCards(overCards, gapScore)
+
+	return gapScore
 }
 
 func (h *Hand) findAndRemoveMaxGapScore(gapScore map[int][]app.Card) ([]app.Card, map[int][]app.Card) {

@@ -16,28 +16,33 @@ func (h *Hand) find111Cards() {
 
 	setCards := h.findSetFromCards([]app.Card{}, h.invalid)
 
-	if len(setCards) < 0 {
-		return
+	overCards := h.handSliceDifference(h.invalid, setCards)
+	if len(overCards) >= 2 {
+		setCards = h.findSetFromCards([]app.Card{}, overCards)
 	}
 
 	for i, p := range h.pure {
+		if len(p) <= 3 {
+			continue
+		}
+
 		tSet := app.Card{}
-		if p[0].Value == setCards[0].Value && p[0].Suit != setCards[0].Suit && h.judgeIsSeq(p[1:]) {
-			tSet = p[0]
+		for j, p1 := range p {
+			if p1.Value == setCards[0].Value && p1.Suit != setCards[0].Suit {
+				resPure := h.removeByIndex(p, j)
+				// 检测切分后是否是合法的顺子
+				if h.judgeIsSeq(resPure) {
+					h.pure[i] = resPure
+					tSet = p1
+					setCards = append(setCards, tSet)
+				}
+			}
 		}
-		if p[len(p)-1].Value == setCards[0].Value && p[0].Suit != setCards[0].Suit && h.judgeIsSeq(p[:len(p)-1]) {
-			tSet = p[len(p)-1]
-		}
-		setCards = append(setCards, tSet)
 		if len(setCards) >= 3 {
 			h.invalid = h.handSliceDifference(h.invalid, setCards)
 			h.set = append(h.set, setCards)
-			h.pure[i] = h.handSliceDifference(h.pure[i], []app.Card{tSet})
 		}
 	}
-
-	// todo::从间隙牌中找刻子
-
 	if len(setCards) >= 3 {
 		return
 	}
@@ -60,8 +65,7 @@ func (h *Hand) findSetFromCards(result, cards []app.Card) []app.Card {
 		cards = cards[1:]
 	}
 
-	// 检查下一张牌是否连续
-	if cards[0].Value == result[len(result)-1].Value {
+	if len(cards) > 0 && cards[0].Value == result[len(result)-1].Value {
 		isSameSuit := false
 		for _, r := range result {
 			if r.Suit != cards[0].Suit {
