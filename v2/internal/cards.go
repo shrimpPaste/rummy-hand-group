@@ -17,6 +17,7 @@ type Hand struct {
 	setWithJoker  [][]app.Card
 	invalid       []app.Card
 	gap1Cards     []app.Card // 间隙为1的牌
+	wild          *app.Card  // 当前的Joker牌
 	suitCards     map[string][]app.Card
 }
 
@@ -169,6 +170,18 @@ func (h *Hand) Run(r *gin.Engine) {
 	//h.findGap1Cards()
 }
 
+func (h *Hand) SetWildJoker(card *app.Card) {
+	h.wild = card
+}
+
+func (h *Hand) GetWildJoker() *app.Card {
+	return h.wild
+}
+
+func (h *Hand) GetJoker() []app.Card {
+	return h.joker
+}
+
 func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 	// 分组
 	h.groupCards(h.suitCards, h.cards)
@@ -191,6 +204,9 @@ func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 
 	// 找刻子
 	h.find111Cards()
+
+	// 再次找间隙为1的牌，因为找刻子有可能腾出来joker
+	h.findGap1Cards()
 
 	return h.valid, h.invalid
 }

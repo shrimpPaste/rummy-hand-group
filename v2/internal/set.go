@@ -13,15 +13,7 @@ func (h *Hand) find111Cards() {
 		h.valid = append(h.valid, h.joker...)
 		h.joker = h.joker[2:]
 	}
-
-	// todo::他只能找无效牌但是不能找到有效牌的
-	setCards := h.findSetFromCards([]app.Card{}, h.invalid)
-	// todo::找出一个花色中的刻子，一张牌应该怎么处理，两张牌怎么处理
-
-	overCards := h.handSliceDifference(h.invalid, setCards)
-	if len(overCards) >= 2 {
-		setCards = h.findSetFromCards([]app.Card{}, overCards)
-	}
+	mostScoreSetCards := h.findHighestScoringSet(h.invalid)
 
 	for i, p := range h.pure {
 		if len(p) <= 3 {
@@ -32,50 +24,147 @@ func (h *Hand) find111Cards() {
 		h.groupCards(pureSuitCards, p)
 
 		for _, cards := range pureSuitCards {
-			if len(setCards) <= 0 {
+			if len(mostScoreSetCards) <= 0 {
 				continue
 			}
 			tSet := app.Card{}
 			for j, p1 := range cards {
-				if p1.Value == setCards[0].Value && p1.Suit != setCards[0].Suit {
+				if p1.Value == mostScoreSetCards[0].Value && p1.Suit != mostScoreSetCards[0].Suit {
 					resPure := h.removeByIndex(cards, j)
 					// 检测切分后是否是合法的顺子
 					if h.judgeIsSeq(resPure) {
 						h.pure[i] = resPure
 						tSet = p1
-						setCards = append(setCards, tSet)
+						mostScoreSetCards = append(mostScoreSetCards, tSet)
 					} else {
 						// 如果抽离后分数比较高的话也可以抽离
 						if len(pureSuitCards) >= 2 {
 							score1 := h.calculateScore(cards)
-							score2 := h.calculateScore(setCards)
+							score2 := h.calculateScore(mostScoreSetCards)
 							if score1 < score2 {
 								// 可以抽离
 								h.pure[i] = resPure
 								tSet = p1
-								setCards = append(setCards, tSet)
+								mostScoreSetCards = append(mostScoreSetCards, tSet)
 							}
 						}
 					}
 				}
 			}
-			if len(setCards) >= 3 {
-				h.invalid = h.handSliceDifference(h.invalid, setCards)
-				h.set = append(h.set, setCards)
-				setCards = []app.Card{}
+			if len(mostScoreSetCards) >= 3 {
+				h.invalid = h.handSliceDifference(h.invalid, mostScoreSetCards)
+				h.set = append(h.set, mostScoreSetCards)
+				mostScoreSetCards = []app.Card{}
 			}
 		}
 	}
-	if len(setCards) >= 3 {
-		return
+
+	for index, cards := range h.pureWithJoker {
+		if len(mostScoreSetCards) <= 0 {
+			continue
+		}
+		score1 := h.calculateScore(cards)
+		score2 := h.calculateScore(mostScoreSetCards)
+		if score1 > score2 {
+			continue
+		}
+
+		var tempJoker []app.Card
+		var isUsedCard bool
+		for _, card := range cards {
+			if len(mostScoreSetCards) <= 0 {
+				continue
+			}
+
+			if card.Value == mostScoreSetCards[0].Value {
+				isAs := false
+				for _, set := range mostScoreSetCards {
+					if set.Suit == card.Suit {
+						isAs = true
+					}
+				}
+				if !isAs {
+					score1 := h.calculateScore(cards)
+					score2 := h.calculateScore(mostScoreSetCards)
+					if score1 <= score2 {
+						// 可以抽离
+						isUsedCard = true
+						invalid := h.handSliceDifference(cards, []app.Card{card})
+						h.invalid = append(h.invalid, invalid...)
+
+						mostScoreSetCards = append(mostScoreSetCards, card)
+						h.set = append(h.set, mostScoreSetCards)
+
+						h.pureWithJoker[index] = []app.Card{}
+					}
+				}
+			}
+		}
+
+		for _, card := range cards {
+			if card.Suit == app.JokerB || card.Suit == app.JokerA || card.Value == h.wild.Value {
+				tempJoker = append(tempJoker, card)
+
+				diffCards := h.handSliceDifference(h.pureWithJoker[index], tempJoker)
+
+				if isUsedCard {
+					if len(diffCards) < 3 {
+						h.pureWithJoker[index] = nil
+						h.invalid = append(h.invalid, diffCards...)
+					} else {
+						h.pureWithJoker[index] = h.handSliceDifference(h.pureWithJoker[index], tempJoker)
+					}
+				}
+			}
+
+		}
+
+		if len(mostScoreSetCards) >= 3 {
+			h.invalid = h.handSliceDifference(h.invalid, mostScoreSetCards)
+			mostScoreSetCards = []app.Card{}
+			h.joker = append(h.joker, tempJoker...)
+		}
 	}
 
-	if len(h.joker) > 1 && len(setCards) >= 2 {
-		setCards = append(setCards, h.joker[0])
-		h.setWithJoker = append(h.setWithJoker, setCards)
+	if len(h.joker) > 1 && len(mostScoreSetCards) >= 2 {
+		mostScoreSetCards = append(mostScoreSetCards, h.joker[0])
+		h.setWithJoker = append(h.setWithJoker, mostScoreSetCards)
 		h.joker = h.removeByIndex(h.joker, 1)
-		h.invalid = h.handSliceDifference(h.invalid, setCards)
+		h.invalid = h.handSliceDifference(h.invalid, mostScoreSetCards)
 	}
+}
+
+// findHighestScoringSet 递归找到分值最大的刻子
+func (h *Hand) findHighestScoringSet(cards []app.Card) []app.Card {
+	var bestSet []app.Card
+	var maxScore int
+
+	var find func(invalid []app.Card, lastSet []app.Card, lastScore int)
+	find = func(invalid []app.Card, lastSet []app.Card, lastScore int) {
+		if len(invalid) < 2 {
+			return
+		}
+
+		currentSet := h.findSetFromCards([]app.Card{}, invalid)
+		currentScore := h.calculateScore(currentSet)
+
+		if currentScore > lastScore {
+			bestSet = currentSet
+			maxScore = currentScore
+		} else {
+			bestSet = lastSet
+			maxScore = lastScore
+		}
+
+		overCards := h.handSliceDifference(invalid, currentSet)
+		if len(overCards) > 0 {
+			find(overCards, bestSet, maxScore)
+		}
+	}
+
+	find(cards, []app.Card{}, 0)
+
+	return bestSet
 }
 
 // findSetFromCards 找一组卡牌中的刻子
