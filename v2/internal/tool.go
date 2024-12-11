@@ -1,6 +1,10 @@
 package internal
 
-import "rummy-group-v2/pkg/app"
+import (
+	"math/rand"
+	"rummy-group-v2/pkg/app"
+	"time"
+)
 
 // handSliceDifference 找两个数组之间的差集
 func (h *Hand) handSliceDifference(a, b []app.Card) []app.Card {
@@ -61,4 +65,39 @@ func (h *Hand) calculateScore(cards []app.Card) int {
 		}
 	}
 	return score
+}
+
+// InitializeDeck 初始化牌堆 （两副牌）
+func InitializeDeck() (deck []app.Card) {
+	for i := 0; i < 2; i++ {
+		for _, suit := range []string{app.A, app.B, app.C, app.D} {
+			for value := 1; value <= 13; value++ {
+				deck = append(deck, app.Card{Suit: suit, Value: value})
+			}
+		}
+
+		// 添加大小王
+		deck = append(deck, app.Card{Suit: app.JokerA, Value: 0})
+		deck = append(deck, app.Card{Suit: app.JokerB, Value: 0})
+	}
+
+	return
+}
+
+func DealCards(deck *[]app.Card, numCards int) []app.Card {
+	// numCards不能超过排堆大小
+	if numCards > len(*deck) {
+		panic("too many cards requested")
+	}
+	hand := (*deck)[:numCards]
+	*deck = (*deck)[numCards:]
+	return hand
+}
+
+func ShuffleDeck(deck []app.Card) []app.Card {
+	rand.NewSource(time.Now().UnixNano()) // 设置随机种子
+	rand.Shuffle(len(deck), func(i, j int) {
+		deck[i], deck[j] = deck[j], deck[i]
+	})
+	return deck
 }

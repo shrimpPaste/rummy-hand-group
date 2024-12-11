@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"rummy-group-v2/internal"
 	"rummy-group-v2/pkg/app"
 	"testing"
+	"time"
 )
 
 func handSliceDifference(a, b []app.Card) []app.Card {
@@ -912,4 +914,290 @@ func TestStraight14(t *testing.T) {
 		t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", wantI, invalid, res2)
 		t.Errorf("invalid %v", invalid)
 	}
+}
+
+func TestStraight15(t *testing.T) {
+
+	h := internal.NewHand()
+	h.SetCards([]app.Card{
+		{Suit: app.D, Value: 3},
+		{Suit: app.D, Value: 6},
+		{Suit: app.D, Value: 10},
+
+		{Suit: app.C, Value: 3},
+		{Suit: app.C, Value: 4},
+		{Suit: app.C, Value: 5},
+		{Suit: app.C, Value: 13},
+
+		{Suit: app.B, Value: 2},
+		{Suit: app.B, Value: 11},
+		{Suit: app.B, Value: 1},
+
+		{Suit: app.A, Value: 5},
+		{Suit: app.A, Value: 6},
+		{Suit: app.A, Value: 11},
+	})
+
+	h.SetWildJoker(&app.Card{Suit: app.C, Value: 7})
+
+	_, invalid := h.RunTest(7)
+	resCards := judgeCardLength(t, h, invalid)
+
+	want := []app.Card{
+		{Suit: app.C, Value: 3},
+		{Suit: app.C, Value: 4},
+		{Suit: app.C, Value: 5},
+	}
+
+	wantI := []app.Card{
+		{Suit: app.D, Value: 3},
+		{Suit: app.D, Value: 6},
+		{Suit: app.D, Value: 10},
+		{Suit: app.C, Value: 13},
+
+		{Suit: app.B, Value: 2},
+		{Suit: app.B, Value: 11},
+		{Suit: app.B, Value: 1},
+
+		{Suit: app.A, Value: 5},
+		{Suit: app.A, Value: 6},
+		{Suit: app.A, Value: 11},
+	}
+
+	realCards := handSliceDifference(resCards, invalid)
+	res := handSliceDifference(want, realCards)
+	if len(want) != len(realCards) {
+		t.Errorf("理想长度 %v; \n 实际长度: %v", len(want), len(realCards))
+		t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", want, realCards, res)
+		t.Errorf("invalid %v", invalid)
+	}
+
+	res2 := handSliceDifference(wantI, invalid)
+	if res != nil {
+		t.Errorf("理想长度 %v; \n 实际长度: %v", len(wantI), len(invalid))
+		t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", wantI, invalid, res2)
+		t.Errorf("invalid %v", invalid)
+	}
+}
+
+func TestStraight16(t *testing.T) {
+	h := internal.NewHand()
+	h.SetCards([]app.Card{
+		{Suit: app.D, Value: 1},
+		{Suit: app.D, Value: 3},
+		{Suit: app.D, Value: 5},
+		{Suit: app.D, Value: 6},
+		{Suit: app.D, Value: 11},
+		{Suit: app.D, Value: 13},
+
+		{Suit: app.C, Value: 2},
+		{Suit: app.C, Value: 11},
+
+		{Suit: app.B, Value: 4},
+		{Suit: app.B, Value: 11},
+
+		{Suit: app.A, Value: 8},
+		{Suit: app.A, Value: 12},
+		{Suit: app.A, Value: 13},
+	})
+
+	h.SetWildJoker(&app.Card{Suit: app.A, Value: 9})
+
+	_, invalid := h.RunTest(9)
+	resCards := judgeCardLength(t, h, invalid)
+
+	var want []app.Card
+
+	wantI := []app.Card{
+		{Suit: app.D, Value: 1},
+		{Suit: app.D, Value: 3},
+		{Suit: app.D, Value: 5},
+		{Suit: app.D, Value: 6},
+		{Suit: app.D, Value: 11},
+		{Suit: app.D, Value: 13},
+
+		{Suit: app.C, Value: 2},
+		{Suit: app.C, Value: 11},
+
+		{Suit: app.B, Value: 4},
+		{Suit: app.B, Value: 11},
+
+		{Suit: app.A, Value: 8},
+		{Suit: app.A, Value: 12},
+		{Suit: app.A, Value: 13},
+	}
+
+	realCards := handSliceDifference(resCards, invalid)
+	res := handSliceDifference(want, realCards)
+	if len(want) != len(realCards) {
+		t.Errorf("理想长度 %v; \n 实际长度: %v", len(want), len(realCards))
+		t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", want, realCards, res)
+		t.Errorf("invalid %v", invalid)
+	}
+
+	res2 := handSliceDifference(wantI, invalid)
+	if res != nil {
+		t.Errorf("理想长度 %v; \n 实际长度: %v", len(wantI), len(invalid))
+		t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", wantI, invalid, res2)
+		t.Errorf("invalid %v", invalid)
+	}
+}
+
+func TestStraight17(t *testing.T) {
+	desk := internal.InitializeDeck()
+
+	internal.ShuffleDeck(desk)
+	headCard := internal.DealCards(&desk, 13)
+
+	h := internal.NewHand()
+	h.SetCards(headCard)
+
+	rand.NewSource(time.Now().UnixNano())
+	jokerV := rand.Intn(13)
+
+	jokerC := app.Card{Suit: app.A, Value: jokerV}
+	h.SetWildJoker(&jokerC)
+	_, invalid := h.RunTest(jokerV)
+
+	printer := func(cards []app.Card, joker *app.Card) {
+		for _, card := range cards {
+			if card.Suit == app.A {
+				if card.Value == joker.Value {
+					fmt.Printf("♠: %v* || ", card.Value)
+				} else {
+					fmt.Printf("♠: %v || ", card.Value)
+				}
+			}
+			if card.Suit == app.B {
+				fmt.Printf("♥: %v || ", card.Value)
+				if card.Value == joker.Value {
+					fmt.Printf("♠: %v* || ", card.Value)
+				} else {
+					fmt.Printf("♠: %v || ", card.Value)
+				}
+			}
+			if card.Suit == app.C {
+				if card.Value == joker.Value {
+					fmt.Printf("♣: %v* || ", card.Value)
+				} else {
+					fmt.Printf("♣: %v || ", card.Value)
+				}
+			}
+			if card.Suit == app.D {
+				if card.Value == joker.Value {
+					fmt.Printf("♦: %v* || ", card.Value)
+				} else {
+					fmt.Printf("♦: %v || ", card.Value)
+				}
+			}
+		}
+	}
+
+	fmt.Print("0 当前的手牌 :  ")
+	printer(h.GetCards(), &jokerC)
+	fmt.Println("手牌长度", len(h.GetCards()))
+	fmt.Println()
+	fmt.Println()
+
+	fmt.Print("1 该牌的无效牌: ")
+	printer(invalid, &jokerC)
+	fmt.Println()
+
+	fmt.Print("2 纯顺子: ")
+	for _, p := range h.GetPure() {
+		printer(p, &jokerC)
+	}
+	fmt.Println()
+
+	fmt.Print("3 拥有的癞子牌: ")
+	printer(h.GetJoker(), &jokerC)
+	fmt.Println()
+
+	fmt.Print("4 带癞子的顺子: ")
+	for _, p := range h.GetPureWithJoker() {
+		printer(p, &jokerC)
+	}
+	fmt.Println()
+
+	fmt.Print("5 纯刻子: ")
+	for _, p := range h.GetSet() {
+		printer(p, &jokerC)
+	}
+	fmt.Println()
+
+	fmt.Print("6 带癞子的刻子: ")
+	for _, p := range h.GetSetWithJoker() {
+		printer(p, &jokerC)
+	}
+	fmt.Println()
+
+	fmt.Printf("7 当前的癞子牌 ♠: %v ", h.GetWildJoker().Value)
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+
+	// A 黑桃
+	// B 红桃
+	// C 梅花
+	// D 方片
+
+	//h.SetCards([]app.Card{
+	//	{Suit: app.D, Value: 1},
+	//	{Suit: app.D, Value: 3},
+	//	{Suit: app.D, Value: 5},
+	//	{Suit: app.D, Value: 6},
+	//	{Suit: app.D, Value: 11},
+	//	{Suit: app.D, Value: 13},
+	//
+	//	{Suit: app.C, Value: 2},
+	//	{Suit: app.C, Value: 11},
+	//
+	//	{Suit: app.B, Value: 4},
+	//	{Suit: app.B, Value: 11},
+	//
+	//	{Suit: app.A, Value: 8},
+	//	{Suit: app.A, Value: 12},
+	//	{Suit: app.A, Value: 13},
+	//})
+	//
+	//h.SetWildJoker(&app.Card{Suit: app.A, Value: 9})
+	//
+	//_, invalid := h.RunTest(9)
+	//resCards := judgeCardLength(t, h, invalid)
+	//
+	//var want []app.Card
+	//
+	//wantI := []app.Card{
+	//	{Suit: app.D, Value: 1},
+	//	{Suit: app.D, Value: 3},
+	//	{Suit: app.D, Value: 5},
+	//	{Suit: app.D, Value: 6},
+	//	{Suit: app.D, Value: 11},
+	//	{Suit: app.D, Value: 13},
+	//
+	//	{Suit: app.C, Value: 2},
+	//	{Suit: app.C, Value: 11},
+	//
+	//	{Suit: app.B, Value: 4},
+	//	{Suit: app.B, Value: 11},
+	//
+	//	{Suit: app.A, Value: 8},
+	//	{Suit: app.A, Value: 12},
+	//	{Suit: app.A, Value: 13},
+	//}
+	//
+	//realCards := handSliceDifference(resCards, invalid)
+	//res := handSliceDifference(want, realCards)
+	//if len(want) != len(realCards) {
+	//	t.Errorf("理想长度 %v; \n 实际长度: %v", len(want), len(realCards))
+	//	t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", want, realCards, res)
+	//	t.Errorf("invalid %v", invalid)
+	//}
+	//
+	//res2 := handSliceDifference(wantI, invalid)
+	//if res != nil {
+	//	t.Errorf("理想长度 %v; \n 实际长度: %v", len(wantI), len(invalid))
+	//	t.Errorf("理想值获取错误： \n want %v  \n res %v \n 他们之间的差距 %v", wantI, invalid, res2)
+	//	t.Errorf("invalid %v", invalid)
+	//}
 }
