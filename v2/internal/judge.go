@@ -72,3 +72,46 @@ func (h *Hand) judgeIsSeq(cards []app.Card) bool {
 	}
 	return false
 }
+
+// 鉴定牌型是否为顺子
+func (h *Hand) judgeIsValidSeq(cards []app.Card) bool {
+	if len(cards) < 3 {
+		return false
+	}
+	// 7 8 joker
+	sort.Slice(cards, func(i, j int) bool {
+		return cards[i].Value < cards[j].Value
+	})
+
+	var jokers []app.Card
+
+	for _, card := range cards {
+		if card.Suit == app.JokerA || card.Suit == app.JokerB || card.Value == h.wild.Value {
+			jokers = append(jokers, card)
+			cards = h.handSliceDifference(cards, jokers)
+			continue
+		}
+	}
+
+	gapValue := 0
+	for i, card := range cards {
+		if i == len(cards)-1 {
+			break
+		}
+
+		gapV := 0
+		if card.Value == 1 && cards[i+1].Value != 2 {
+			//   1 9 10 11 12 13 的牌型
+			gapV = 14 - cards[len(cards)-1].Value
+			continue
+		}
+		gapV = card.Value - cards[i+1].Value
+		if gapV != 1 && gapV != -1 {
+			gapValue += gapV
+		}
+	}
+	if len(jokers)*2 >= gapValue*-1 {
+		return true
+	}
+	return false
+}

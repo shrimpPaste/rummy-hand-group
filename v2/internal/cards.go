@@ -122,7 +122,7 @@ func (h *Hand) Run(r *gin.Engine) {
 		return
 	}
 	// 有癞子找间隙牌
-	h.findGap1Cards()
+	h.findInvalidGap1Cards()
 
 	// 找刻子
 	h.find111Cards()
@@ -167,7 +167,7 @@ func (h *Hand) Run(r *gin.Engine) {
 	//fmt.Println("len(h.cards)", len(h.cards))
 
 	// 找间隙为1的牌
-	//h.findGap1Cards()
+	//h.findInvalidGap1Cards()
 }
 
 func (h *Hand) SetWildJoker(card *app.Card) {
@@ -183,30 +183,35 @@ func (h *Hand) GetJoker() []app.Card {
 }
 
 func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
-	// 分组
-	h.groupCards(h.suitCards, h.cards)
-	// 找顺子
-	h.findSequences()
-	// 第一轮鉴定
-	if !h.judgeIsHave1Seq() {
-		//fmt.Println("Waring::没有找到一个无赖字的同花顺子")
-		return h.valid, h.invalid
-	}
-	// 找癞子
-	h.findInvalidJoker(wild)
+	h.findValidGap1Cards()
 
-	if len(h.joker) < 1 && !h.judgeIsHave2Seq() {
-		//fmt.Println("Waring::没有找到足够的癞子牌支持组成第二组顺子")
-		return h.valid, h.invalid
-	}
-	// 有癞子找间隙牌
-	h.findGap1Cards()
-
-	// 找刻子
-	h.find111Cards()
-
-	// 再次找间隙为1的牌，因为找刻子有可能腾出来joker
-	h.findGap1Cards()
+	//// 分组
+	//h.groupCards(h.suitCards, h.cards)
+	//// 找顺子
+	//h.findSequences()
+	//// 第一轮鉴定
+	//if !h.judgeIsHave1Seq() {
+	//	//fmt.Println("Waring::没有找到一个无赖字的同花顺子")
+	//	return h.valid, h.invalid
+	//}
+	//// 找癞子
+	//h.findInvalidJoker(wild)
+	//
+	//if len(h.joker) < 1 && !h.judgeIsHave2Seq() {
+	//	//fmt.Println("Waring::没有找到足够的癞子牌支持组成第二组顺子")
+	//	return h.valid, h.invalid
+	//}
+	//
+	//h.findValidGap1Cards()
+	//
+	//// 有癞子找间隙牌
+	//h.findInvalidGap1Cards()
+	//
+	//// 找刻子
+	//h.find111Cards()
+	//
+	//// 再次找间隙为1的牌，因为找刻子有可能腾出来joker
+	//h.findInvalidGap1Cards()
 
 	return h.valid, h.invalid
 }
