@@ -18,28 +18,29 @@ func (h *Hand) Run(r *gin.Engine) {
 
 func (h *Hand) WebGet(c *gin.Context) {
 	h.SetCards([]app.Card{
-		{Suit: app.D, Value: 4},
-		{Suit: app.D, Value: 7},
-		{Suit: app.D, Value: 8},
-		{Suit: app.D, Value: 9},
-		{Suit: app.D, Value: 10},
-		{Suit: app.D, Value: 11},
-		{Suit: app.D, Value: 12},
+		{Value: 3, Suit: app.D},
+		{Value: 4, Suit: app.D},
+		{Value: 5, Suit: app.D},
+		{Value: 6, Suit: app.D},
 
-		{Suit: app.D, Value: 13},
-		{Suit: app.C, Value: 13},
-		{Suit: app.B, Value: 13},
+		{Value: 2, Suit: app.C},
+		{Value: 4, Suit: app.C},
+		{Value: 5, Suit: app.C},
 
-		{Suit: app.B, Value: 9},
-		{Suit: app.B, Value: 11},
+		{Value: 5, Suit: app.B},
+		{Value: 6, Suit: app.B},
+		{Value: 3, Suit: app.B},
+		{Value: 6, Suit: app.B},
 
-		{Suit: app.B, Value: 3},
+		{Value: 2, Suit: app.A},
+		{Value: 3, Suit: app.A},
 	})
 
-	h.SetWildJoker(app.Card{Suit: app.A, Value: 4})
+	h.SetWildJoker(app.Card{Suit: app.A, Value: 6})
 
 	jokers, overCards := h.findJoker(h.cards)
 
+	tempOverCards := overCards
 	// TODO::第一步先去找牌堆中所有的三条,同时剩下的仍然能组成顺子
 	overCards, setCards, scoreMapCards := h.findSet(overCards)
 
@@ -49,8 +50,9 @@ func (h *Hand) WebGet(c *gin.Context) {
 		// 先找三条后还能找到找到顺子
 		fmt.Println(scoreMapCards)
 	} else {
+		overCards = tempOverCards
 		// 找不到顺子
-		pureCards, overCards := h.GetPure(overCards)
+		pureCards, overCards = h.GetPure(overCards)
 		// TODO:: 第一步鉴定是否有顺子没有则中断
 		if !h.judgeIsHave1Seq(pureCards) {
 			c.JSON(200, gin.H{
