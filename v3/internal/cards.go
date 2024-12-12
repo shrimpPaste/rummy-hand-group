@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"math/rand"
 	"rummy-logic-v3/pkg/app"
 )
 
@@ -18,25 +19,35 @@ func (h *Hand) Run(r *gin.Engine) {
 
 func (h *Hand) WebGet(c *gin.Context) {
 	h.SetCards([]app.Card{
-		{Value: 3, Suit: app.D},
-		{Value: 4, Suit: app.D},
-		{Value: 5, Suit: app.D},
-		{Value: 6, Suit: app.D},
+		{Suit: app.D, Value: 1},
+		{Suit: app.D, Value: 3},
+		{Suit: app.D, Value: 5},
+		{Suit: app.D, Value: 6},
+		{Suit: app.D, Value: 11},
+		{Suit: app.D, Value: 13},
 
-		{Value: 2, Suit: app.C},
-		{Value: 4, Suit: app.C},
-		{Value: 5, Suit: app.C},
+		{Suit: app.C, Value: 2},
+		{Suit: app.C, Value: 11},
 
-		{Value: 5, Suit: app.B},
-		{Value: 6, Suit: app.B},
-		{Value: 3, Suit: app.B},
-		{Value: 6, Suit: app.B},
+		{Suit: app.B, Value: 4},
+		{Suit: app.B, Value: 11},
 
-		{Value: 2, Suit: app.A},
-		{Value: 3, Suit: app.A},
+		{Suit: app.A, Value: 8},
+		{Suit: app.A, Value: 12},
+		{Suit: app.A, Value: 13},
 	})
+	jokerRand := app.Card{Suit: app.D, Value: 2}
 
-	h.SetWildJoker(app.Card{Suit: app.A, Value: 6})
+	suitRand := rand.Intn(4)
+	if suitRand == 0 {
+		jokerRand.Suit = app.A
+	} else if suitRand == 1 {
+		jokerRand.Suit = app.C
+	} else if suitRand == 2 {
+		jokerRand.Suit = app.B
+	}
+
+	h.SetWildJoker(jokerRand)
 
 	jokers, overCards := h.findJoker(h.cards)
 
@@ -51,6 +62,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 		fmt.Println(scoreMapCards)
 	} else {
 		overCards = tempOverCards
+		setCards = []app.Card{}
 		// 找不到顺子
 		pureCards, overCards = h.GetPure(overCards)
 		// TODO:: 第一步鉴定是否有顺子没有则中断
@@ -63,7 +75,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 				"set":           getCardsResult([]app.Card{}),
 				"setWithJoker":  getCardsResult([]app.Card{}),
 				"invalid":       getCardsResult(overCards),
-				"joker":         getCardsResult([]app.Card{}),
+				"joker":         getCardsResult(jokers),
 				"sysJoker":      getCardsResult([]app.Card{h.wild}),
 			})
 			return
