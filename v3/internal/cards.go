@@ -31,11 +31,15 @@ func (h *Hand) WebGet(c *gin.Context) {
 		{Suit: app.A, Value: 12},
 		{Suit: app.A, Value: 12},
 		{Suit: app.A, Value: 1},
+
+		{Suit: app.JokerA, Value: 15},
 	})
 
 	h.SetWildJoker(app.Card{Suit: app.A, Value: 1})
 
-	pureCards, overCards := h.GetPure(h.cards)
+	jokers, overCards := h.findJoker(h.cards)
+
+	pureCards, overCards := h.GetPure(overCards)
 	// TODO:: 第一步鉴定是否有顺子没有则中断
 	if !h.judgeIsHave1Seq(pureCards) {
 		c.JSON(200, gin.H{
@@ -60,7 +64,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 		"set":           getCardsResult([]app.Card{}),
 		"setWithJoker":  getCardsResult([]app.Card{}),
 		"invalid":       getCardsResult(overCards),
-		"joker":         getCardsResult([]app.Card{}),
+		"joker":         getCardsResult(jokers),
 		"sysJoker":      getCardsResult([]app.Card{h.wild}),
 	})
 	return

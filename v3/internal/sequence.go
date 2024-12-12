@@ -81,16 +81,6 @@ func (h *Hand) findSequenceFromCards(result, cards []app.Card) []app.Card {
 
 // GetPure 获取纯顺子
 func (h *Hand) GetPure(cards []app.Card) (pureCards, overCards []app.Card) {
-	// 移除joker牌
-	for _, card := range cards {
-		if card.Suit == app.JokerA || card.Suit == app.JokerB || card.Value == h.wild.Value {
-			// 添加joker
-			overCards = append(overCards, card)
-
-			cards = h.handSliceDifference(cards, []app.Card{card})
-		}
-	}
-
 	suitCards := make(map[string][]app.Card, 4)
 	h.groupCards(suitCards, cards)
 
