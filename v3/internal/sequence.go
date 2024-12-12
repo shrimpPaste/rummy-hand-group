@@ -2,6 +2,7 @@ package internal
 
 import (
 	"rummy-logic-v3/pkg/app"
+	"sort"
 )
 
 // 关于找顺子的逻辑
@@ -76,4 +77,36 @@ func (h *Hand) findSequenceFromCards(result, cards []app.Card) []app.Card {
 
 	// 递归调用，从下一张牌开始检查
 	return h.findSequenceFromCards(result, cards[1:])
+}
+
+// GetPure 获取纯顺子
+func (h *Hand) GetPure(cards []app.Card) (pureCards, overCards []app.Card) {
+	// 移除joker牌
+	for _, card := range cards {
+		if card.Suit == app.JokerA || card.Suit == app.JokerB || card.Value == h.wild.Value {
+			// 添加joker
+			overCards = append(overCards, card)
+
+			cards = h.handSliceDifference(cards, []app.Card{card})
+		}
+	}
+
+	suitCards := make(map[string][]app.Card, 4)
+	h.groupCards(suitCards, cards)
+
+	for _, c := range suitCards {
+		sort.Slice(c, func(i, j int) bool {
+			return c[i].Value < c[j].Value
+		})
+		sequence := h.findValidSequence(c)
+
+		if len(sequence) < 3 {
+			overCards = append(overCards, c...)
+		} else {
+			pureCards = append(pureCards, sequence...)
+			overCards = append(overCards, h.handSliceDifference(c, sequence)...)
+		}
+	}
+
+	return
 }
