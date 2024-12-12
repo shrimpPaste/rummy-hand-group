@@ -234,6 +234,7 @@ func (h *Hand) RunWeb(r *gin.Engine) {
 		h.setWithJoker = [][]app.Card{}
 		h.invalid = []app.Card{}
 		h.valid = []app.Card{}
+		h.joker = []app.Card{}
 
 		rand.NewSource(time.Now().UnixNano())
 		jokerV := rand.Intn(12) + 1
@@ -283,7 +284,8 @@ func (h *Hand) RunWeb(r *gin.Engine) {
 			"set":           getCardsResult(set),
 			"setWithJoker":  getCardsResult(setWithJoker),
 			"invalid":       getCardsResult(invalidCards),
-			"joker":         getCardsResult([]app.Card{*h.GetWildJoker()}),
+			"joker":         getCardsResult(h.GetJoker()),
+			"sysJoker":      getCardsResult([]app.Card{*h.GetWildJoker()}),
 		})
 		return
 	})
