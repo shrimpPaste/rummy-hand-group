@@ -89,3 +89,38 @@ func (h *Hand) findSetWithJoker(cards, jokers []app.Card) ([]app.Card, []app.Car
 	}
 	return cards, valid, jokers
 }
+
+func (h *Hand) findSet(cards []app.Card) (overCards, setCards []app.Card, result map[int][]app.Card) {
+	result = make(map[int][]app.Card)
+	// 按值分组
+	for _, card := range cards {
+		if result[card.Value] == nil {
+			result[card.Value] = append(result[card.Value], card)
+			continue
+		}
+
+		isExist := false
+		for _, v := range result[card.Value] {
+			if v.Suit == card.Suit {
+				isExist = true
+				break
+			}
+		}
+		if isExist {
+			overCards = append(overCards, card)
+		} else {
+			result[card.Value] = append(result[card.Value], card)
+		}
+	}
+
+	for i, r := range result {
+		if len(r) >= 3 {
+			setCards = append(setCards, r...)
+			delete(result, i)
+			continue
+		}
+		overCards = append(overCards, r...)
+	}
+
+	return overCards, setCards, result
+}
