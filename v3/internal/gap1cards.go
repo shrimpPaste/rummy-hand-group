@@ -2,6 +2,7 @@ package internal
 
 import (
 	"rummy-logic-v3/pkg/app"
+	"sort"
 )
 
 // findValidGap1Cards 处理纯顺子中也有可能有卡隆牌
@@ -499,153 +500,6 @@ func (h *Hand) getMostScoreCards(cardsMap map[int][]app.Card) ([]app.Card, int) 
 	return cardsMap[mostScore], mostScore
 }
 
-//func (h *Hand) getMinScoreGroup(pureWithJoker [][]app.Card) (scoreCard []app.Card, delCard []app.Card, seqCard []app.Card, joker []app.Card, score int) {
-//	// 内部函数，用于计算最大分数
-//	calcMostScore := func(cardsMap map[int][]app.Card) int {
-//		maxScore := 0
-//		for k := range cardsMap {
-//			if k > maxScore {
-//				maxScore = k
-//			}
-//		}
-//		return maxScore
-//	}
-//
-//	cardsMap := map[int][]app.Card{}
-//
-//	for _, p := range pureWithJoker {
-//		//sequence := h.findValidSequence(p)
-//		//p = h.handSliceDifference(p, sequence)
-//
-//		suitCards := make(map[string][]app.Card, 4)
-//		h.groupCards(suitCards, p)
-//
-//		// 记录 invalid 的 gap 分数
-//
-//		// 处理 invalidSuitCards 分组
-//		for suit, cards := range suitCards {
-//			//for _, v := range cards {
-//			//	if v.Suit == app.JokerA || v.Suit == app.JokerB || v.Value == h.wild.Value {
-//			//		joker = append(joker, v)
-//			//		continue
-//			//	}
-//			//}
-//			if len(cards) < 2 {
-//				//cardsMap[h.calculateScore(cards)] = cards
-//				continue
-//			}
-//			sort.Slice(cards, func(i, j int) bool {
-//				return cards[i].Value < cards[j].Value
-//			})
-//
-//			cardsMap = h.handleGapsCards(cards, cardsMap)
-//			for _, g := range cardsMap {
-//				suitCards[suit] = h.handSliceDifference(suitCards[suit], g)
-//			}
-//			for _, v := range p {
-//				if v.Suit == app.JokerA || v.Suit == app.JokerB || v.Value == h.wild.Value {
-//					joker = append(joker, v)
-//					continue
-//				}
-//			}
-//		}
-//	}
-//
-//	// 调用内部函数计算最大分数
-//	mostScore := calcMostScore(cardsMap)
-//	jokerScore := 0
-//
-//	for _, v := range cardsMap[mostScore] {
-//		if v.Suit == app.JokerA || v.Suit == app.JokerB {
-//			joker = append(joker, v)
-//			continue
-//		}
-//		if v.Value == h.wild.Value {
-//			jokerScore += v.Value
-//			joker = append(joker, v)
-//			continue
-//		}
-//	}
-//
-//	seqCard = h.findValidSequence(cardsMap[mostScore])
-//	res := h.handSliceDifference(cardsMap[mostScore], seqCard)
-//	delCard = append(delCard, joker...)
-//	delCard = append(delCard, res...)
-//	delCard = append(delCard, seqCard...)
-//
-//	resScore := mostScore
-//	resScore -= h.calculateScore(seqCard)
-//	resScore -= jokerScore
-//
-//	// 返回结果
-//	return cardsMap[mostScore], delCard, seqCard, joker, resScore
-//}
-
-// 处理卡隆牌
-//func (h *Hand) findInvalidGap1Cards() {
-//	// 检测是否已经拥有两个及以上的顺子，并且没有使用过小丑牌。
-//	h.suitCards = make(map[string][]app.Card, 4)
-//	h.groupCards(h.suitCards, h.invalid)
-//	h.invalid = []app.Card{}
-//
-//	gapScore := map[int][]app.Card{}
-//
-//	for suit, cards := range h.suitCards {
-//		if len(cards) < 2 {
-//			h.invalid = append(h.invalid, cards...)
-//			h.suitCards[suit] = []app.Card{}
-//			continue
-//		}
-//		sort.Slice(cards, func(i, j int) bool {
-//			return cards[i].Value < cards[j].Value
-//		})
-//
-//		gapScore = h.handleGapsCards(cards, gapScore)
-//	}
-//
-//	for _, joker := range h.joker {
-//		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
-//		if len(bestCards) > 0 {
-//			bestCards = append(bestCards, joker)
-//
-//			h.pureWithJoker = append(h.pureWithJoker, bestCards)
-//
-//			h.invalid = h.handSliceDifference(h.invalid, bestCards)
-//
-//			h.joker = h.removeByIndex(h.joker, 0)
-//			gapScore = g
-//		}
-//	}
-//
-//	for _, cards := range gapScore {
-//		h.invalid = append(h.invalid, cards...)
-//	}
-//}
-
-// handleGapsCards 处理间隙数据
-//func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) map[int][]app.Card {
-//	if len(cards) < 2 {
-//		h.invalid = append(h.invalid, cards...)
-//		return gapScore
-//	}
-//
-//	gapsCards := h.findGap(cards)
-//
-//	if len(gapsCards) >= 2 {
-//		gapScore[h.calculateScore(gapsCards)] = gapsCards
-//	}
-//
-//	if len(gapsCards) < 2 {
-//		h.invalid = append(h.invalid, cards...)
-//		return gapScore
-//	}
-//
-//	overCards := h.handSliceDifference(cards, gapsCards)
-//	gapScore = h.handleGapsCards(overCards, gapScore)
-//
-//	return gapScore
-//}
-
 func (h *Hand) findAndRemoveMaxGapScore(gapScore map[int][]app.Card) ([]app.Card, map[int][]app.Card) {
 	var maxKey int
 	var maxCards []app.Card
@@ -720,4 +574,65 @@ func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.C
 
 	// 递归调用，从下一张牌开始检查
 	return h.findGapFromCards(result, cards[1:], usedGap2)
+}
+
+func (h *Hand) findGapMostScoreCards(overCards, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
+	suitCards := make(map[string][]app.Card, 4)
+	h.groupCards(suitCards, overCards)
+	gapScore := map[int][]app.Card{}
+
+	var result []app.Card
+
+	for suit, cards := range suitCards {
+		if len(cards) < 2 {
+			continue
+		}
+		sort.Slice(cards, func(i, j int) bool {
+			return cards[i].Value < cards[j].Value
+		})
+
+		gapScore = h.handleGapsCards(cards, gapScore)
+		for _, g := range gapScore {
+			suitCards[suit] = h.handSliceDifference(suitCards[suit], g)
+		}
+	}
+
+	for i, joker := range jokers {
+		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
+		if len(bestCards) > 0 {
+			bestCards = append(bestCards, joker)
+
+			result = append(result, bestCards...)
+
+			overCards = h.handSliceDifference(overCards, bestCards)
+
+			jokers = h.removeByIndex(jokers, i)
+			gapScore = g
+		}
+	}
+
+	for _, cards := range gapScore {
+		overCards = append(overCards, cards...)
+	}
+	//for _, cards := range suitCards {
+	//	overCards = append(overCards, cards...)
+	//}
+	return overCards, result, jokers
+}
+
+func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) (score map[int][]app.Card) {
+	gapsCards := h.findGap(cards)
+
+	if len(gapsCards) >= 2 {
+		gapScore[h.calculateScore(gapsCards)] = gapsCards
+	}
+
+	if len(gapsCards) < 2 {
+		return gapScore
+	}
+
+	overCards := h.handSliceDifference(cards, gapsCards)
+	gapScore = h.handleGapsCards(overCards, gapScore)
+
+	return gapScore
 }
