@@ -58,7 +58,17 @@ func (h *Hand) findSequenceFromCards(result, cards []app.Card) []app.Card {
 	if result[len(result)-1].Value == 1 {
 		for _, card := range cards {
 			if card.Value == 13 || card.Value == 12 {
-				result = append(result, card)
+				isExist := false
+				for _, r := range result {
+					if r.Value == 13 || r.Value == 12 {
+						isExist = true
+					}
+				}
+				if !isExist {
+					result = append(result, card)
+				} else {
+					continue
+				}
 			}
 		}
 		if len(result) >= 3 {

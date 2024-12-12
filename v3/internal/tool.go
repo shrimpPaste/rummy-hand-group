@@ -8,17 +8,19 @@ import (
 
 // handSliceDifference 找两个数组之间的差集
 func (h *Hand) handSliceDifference(a, b []app.Card) []app.Card {
-	// 创建一个 map 来存储 b 中的元素
-	bMap := make(map[app.Card]struct{})
+	// 用 map 记录 b 中每张卡片的数量
+	bCount := make(map[app.Card]int)
 	for _, card := range b {
-		bMap[card] = struct{}{} // 用空结构体来表示集合中的元素
+		bCount[card]++ // 记录每张卡片出现的次数
 	}
 
 	var difference []app.Card
-	// 遍历 a 中的每个 card，检查它是否在 b 中
+	// 遍历 a，检查每张卡片是否在 b 中以及出现的次数
 	for _, card := range a {
-		if _, found := bMap[card]; !found {
-			difference = append(difference, card) // 如果不在 b 中，就加到差集
+		if count, found := bCount[card]; found && count > 0 {
+			bCount[card]-- // b 中减少一次计数
+		} else {
+			difference = append(difference, card) // 如果 b 中没有或计数为 0，则加入差值
 		}
 	}
 
