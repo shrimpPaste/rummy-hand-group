@@ -90,6 +90,59 @@ func (h *Hand) findSetWithJoker(cards, jokers []app.Card) ([]app.Card, []app.Car
 	return cards, valid, jokers
 }
 
+func (h *Hand) findSetWithJoker2(cards, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
+	result := make(map[int][]app.Card)
+	var overCards []app.Card
+	var setCards []app.Card
+	// 按值分组
+	for _, card := range cards {
+		if result[card.Value] == nil {
+			result[card.Value] = append(result[card.Value], card)
+			continue
+		}
+
+		isExist := false
+		for _, v := range result[card.Value] {
+			if v.Suit == card.Suit {
+				isExist = true
+				break
+			}
+		}
+		if isExist {
+			overCards = append(overCards, card)
+		} else {
+			result[card.Value] = append(result[card.Value], card)
+		}
+	}
+
+	// 消耗1张Joker牌
+	for i, r := range result {
+		if len(r) == 2 && len(jokers) >= 1 {
+			setCards = append(setCards, r...)
+			setCards = append(setCards, jokers[0])
+			jokers = jokers[1:]
+			delete(result, i)
+			continue
+		}
+	}
+
+	// 消耗2张Joker牌
+	for i, r := range result {
+		if len(r) == 1 && len(jokers) >= 2 {
+			setCards = append(setCards, r...)
+			setCards = append(setCards, jokers[0], jokers[1])
+			jokers = jokers[2:]
+			delete(result, i)
+			continue
+		}
+	}
+
+	for _, r := range result {
+		overCards = append(overCards, r...)
+	}
+	return overCards, setCards, jokers
+}
+
 func (h *Hand) findSet(cards []app.Card) (overCards, setCards []app.Card, result map[int][]app.Card) {
 	result = make(map[int][]app.Card)
 	// 按值分组

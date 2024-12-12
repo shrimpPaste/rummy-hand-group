@@ -18,24 +18,43 @@ func (h *Hand) Run(r *gin.Engine) {
 }
 
 func (h *Hand) WebGet(c *gin.Context) {
-	h.SetCards([]app.Card{
-		{Suit: app.D, Value: 1},
-		{Suit: app.D, Value: 3},
-		{Suit: app.D, Value: 5},
-		{Suit: app.D, Value: 6},
-		{Suit: app.D, Value: 11},
-		{Suit: app.D, Value: 13},
+	isTest := false
+	if isTest {
+		desk := InitializeDeck()
+		ShuffleDeck(desk)
+		headCard := DealCards(&desk, 13)
 
-		{Suit: app.C, Value: 2},
-		{Suit: app.C, Value: 11},
+		suitCards := make(map[string][]app.Card, 4)
+		h.groupCards(suitCards, headCard)
 
-		{Suit: app.B, Value: 4},
-		{Suit: app.B, Value: 11},
+		var headCardRes []app.Card
+		for _, cards := range suitCards {
+			headCardRes = append(headCardRes, cards...)
+		}
 
-		{Suit: app.A, Value: 8},
-		{Suit: app.A, Value: 12},
-		{Suit: app.A, Value: 13},
-	})
+		h.SetCards(headCardRes)
+
+	} else {
+		h.SetCards([]app.Card{
+			{Suit: app.D, Value: 13},
+			{Suit: app.D, Value: 7},
+			{Suit: app.D, Value: 8},
+			{Suit: app.D, Value: 6},
+			{Suit: app.D, Value: 11},
+			{Suit: app.D, Value: 2},
+
+			{Suit: app.C, Value: 1},
+			{Suit: app.C, Value: 2},
+
+			{Suit: app.B, Value: 13},
+
+			{Suit: app.A, Value: 5},
+			{Suit: app.A, Value: 7},
+			{Suit: app.A, Value: 13},
+			{Suit: app.JokerA, Value: 15},
+		})
+	}
+
 	jokerRand := app.Card{Suit: app.D, Value: 2}
 
 	suitRand := rand.Intn(4)
@@ -54,6 +73,8 @@ func (h *Hand) WebGet(c *gin.Context) {
 	tempOverCards := overCards
 	// TODO::第一步先去找牌堆中所有的三条,同时剩下的仍然能组成顺子
 	overCards, setCards, scoreMapCards := h.findSet(overCards)
+
+	// TODO:: scoreMapCards 找到的顺子没有被删掉
 
 	pureCards, overCards := h.GetPure(overCards)
 	// TODO:: 第一步鉴定是否有顺子没有则中断
@@ -86,7 +107,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 	overCards, pureWithCards, jokers := h.findGapMostScoreCards(overCards, jokers)
 
 	// TODO:: 第四步从无效牌中找到两个相同值但是花色不同的牌 (带joker的癞子)
-	overCards, setWithJoker, jokers := h.findSetWithJoker(overCards, jokers)
+	overCards, setWithJoker, jokers := h.findSetWithJoker2(overCards, jokers)
 
 	c.JSON(200, gin.H{
 		"myCards":       getCardsResult(h.cards),
