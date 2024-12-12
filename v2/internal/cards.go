@@ -3,7 +3,9 @@ package internal
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"math/rand"
 	"rummy-group-v2/pkg/app"
+	"time"
 )
 
 // Hand 手牌
@@ -214,6 +216,98 @@ func (h *Hand) RunTest(wild int) ([]app.Card, []app.Card) {
 	//h.findInvalidGap1Cards()
 
 	return h.valid, h.invalid
+}
+
+func (h *Hand) RunWeb(r *gin.Engine) {
+	//h.findValidGap1Cards()
+
+	r.GET("/", func(c *gin.Context) {
+		desk := InitializeDeck()
+
+		ShuffleDeck(desk)
+		headCard := DealCards(&desk, 13)
+		h.SetCards(headCard)
+
+		h.pure = [][]app.Card{}
+		h.pureWithJoker = [][]app.Card{}
+		h.set = [][]app.Card{}
+		h.setWithJoker = [][]app.Card{}
+		h.invalid = []app.Card{}
+		h.valid = []app.Card{}
+
+		rand.NewSource(time.Now().UnixNano())
+		jokerV := rand.Intn(12) + 1
+
+		jokerC := app.Card{Suit: app.A, Value: jokerV}
+		h.SetWildJoker(&jokerC)
+
+		suitCards := make(map[string][]app.Card, 4)
+		h.groupCards(suitCards, h.GetCards())
+
+		var handCards []app.Card
+		for _, cards := range suitCards {
+			handCards = append(handCards, cards...)
+		}
+		myCards := getCardsResult(handCards)
+
+		var calcCardsRaw []app.Card
+		var pureCards, pureWithJoker, set, setWithJoker, invalidCards []app.Card
+		h.findValidGap1Cards()
+
+		for _, p := range h.pure {
+			calcCardsRaw = append(calcCardsRaw, p...)
+			pureCards = append(pureCards, p...)
+		}
+		for _, cards := range h.pureWithJoker {
+			calcCardsRaw = append(calcCardsRaw, cards...)
+			pureWithJoker = append(pureWithJoker, cards...)
+		}
+		for _, cards := range h.set {
+			calcCardsRaw = append(calcCardsRaw, cards...)
+			set = append(set, cards...)
+		}
+		for _, cards := range h.setWithJoker {
+			calcCardsRaw = append(calcCardsRaw, cards...)
+			setWithJoker = append(setWithJoker, cards...)
+		}
+		for _, cards := range h.invalid {
+			calcCardsRaw = append(calcCardsRaw, cards)
+			invalidCards = append(invalidCards, cards)
+		}
+
+		c.JSON(200, gin.H{
+			"myCards":       myCards,
+			"calcCards":     getCardsResult(calcCardsRaw),
+			"pure":          getCardsResult(pureCards),
+			"pureWithJoker": getCardsResult(pureWithJoker),
+			"set":           getCardsResult(set),
+			"setWithJoker":  getCardsResult(setWithJoker),
+			"invalid":       getCardsResult(invalidCards),
+			"joker":         getCardsResult([]app.Card{*h.GetWildJoker()}),
+		})
+		return
+	})
+	return
+}
+
+func getCardsResult(cards []app.Card) []int {
+	var myCards []int
+	for _, c := range cards {
+		if c.Suit == app.A {
+			myCards = append(myCards, c.Value+48)
+		} else if c.Suit == app.B {
+			myCards = append(myCards, c.Value+32)
+		} else if c.Suit == app.C {
+			myCards = append(myCards, c.Value+16)
+		} else if c.Suit == app.D {
+			myCards = append(myCards, c.Value)
+		} else if c.Suit == app.JokerA {
+			myCards = append(myCards, 79)
+		} else if c.Suit == app.JokerB {
+			myCards = append(myCards, 78)
+		}
+	}
+	return myCards
 }
 
 func NewHand() *Hand {

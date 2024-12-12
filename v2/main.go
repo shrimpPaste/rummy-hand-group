@@ -22,7 +22,7 @@ func main() {
 			c.Next()
 		}
 	})
-	internal.NewHand().Run(r)
+	internal.NewHand().RunWeb(r)
 
 	err := r.Run()
 	if err != nil {

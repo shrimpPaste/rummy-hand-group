@@ -1053,7 +1053,7 @@ func TestStraight17(t *testing.T) {
 	h.SetCards(headCard)
 
 	rand.NewSource(time.Now().UnixNano())
-	jokerV := rand.Intn(13)
+	jokerV := rand.Intn(12) + 1
 
 	jokerC := app.Card{Suit: app.A, Value: jokerV}
 	h.SetWildJoker(&jokerC)
