@@ -56,13 +56,16 @@ func (h *Hand) WebGet(c *gin.Context) {
 		return
 	}
 
+	// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (带joker的癞子)
+	overCards, setWithJoker, jokers := h.findSetWithJoker(overCards, jokers)
+
 	c.JSON(200, gin.H{
 		"myCards":       getCardsResult(h.cards),
 		"calcCards":     getCardsResult([]app.Card{}),
 		"pure":          getCardsResult(pureCards),
 		"pureWithJoker": getCardsResult([]app.Card{}),
 		"set":           getCardsResult([]app.Card{}),
-		"setWithJoker":  getCardsResult([]app.Card{}),
+		"setWithJoker":  getCardsResult(setWithJoker),
 		"invalid":       getCardsResult(overCards),
 		"joker":         getCardsResult(jokers),
 		"sysJoker":      getCardsResult([]app.Card{h.wild}),
