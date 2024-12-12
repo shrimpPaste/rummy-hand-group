@@ -68,7 +68,6 @@ func (h *Hand) findSetWithJoker(cards, jokers []app.Card) ([]app.Card, []app.Car
 
 	for _, card := range cards {
 		if len(valid) == 0 {
-			valid = append(valid, card)
 			continue
 		}
 
