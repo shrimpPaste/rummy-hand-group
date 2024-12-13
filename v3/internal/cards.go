@@ -40,24 +40,24 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	} else {
 		h.SetCards([]app.Card{
-			{Suit: app.D, Value: 3},
-			{Suit: app.D, Value: 6},
 			{Suit: app.D, Value: 11},
+			{Suit: app.D, Value: 1},
+			{Suit: app.D, Value: 12},
 
+			{Suit: app.C, Value: 7},
+			{Suit: app.C, Value: 10},
 			{Suit: app.C, Value: 11},
 			{Suit: app.C, Value: 12},
-			{Suit: app.C, Value: 13},
-			{Suit: app.C, Value: 13},
 
-			{Suit: app.B, Value: 6},
-			{Suit: app.B, Value: 8},
+			{Suit: app.B, Value: 2},
+			{Suit: app.B, Value: 10},
 			{Suit: app.B, Value: 11},
 
-			{Suit: app.A, Value: 6},
-			{Suit: app.JokerA, Value: 15},
-			{Suit: app.JokerB, Value: 14},
+			{Suit: app.A, Value: 13},
+			{Suit: app.A, Value: 3},
+			{Suit: app.A, Value: 11},
 		})
-		jokerValueRand = 6
+		jokerValueRand = 10
 	}
 
 	//{Suit: app.D, Value: 5},
@@ -133,6 +133,9 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	// TODO:: 第二步找无效牌中间隙牌+joker分值最高的牌
 	overCards, pureWithCards, jokers := h.findGapMostScoreCards(overCards, jokers)
+
+	// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (不带joker的癞子)
+	overCards, setCards, scoreMapCards = h.findSet(overCards)
 
 	// TODO:: 第四步从无效牌中找到两个相同值但是花色不同的牌 (带joker的癞子)
 	overCards, setWithJoker, jokers := h.findSetWithJoker2(overCards, jokers)
