@@ -40,24 +40,23 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	} else {
 		h.SetCards([]app.Card{
-			{Suit: app.D, Value: 1},
-			{Suit: app.D, Value: 8},
-			{Suit: app.D, Value: 13},
-
+			{Suit: app.C, Value: 3},
+			{Suit: app.C, Value: 4},
+			{Suit: app.C, Value: 4},
+			{Suit: app.C, Value: 5},
 			{Suit: app.C, Value: 7},
-			{Suit: app.C, Value: 8},
-			{Suit: app.C, Value: 9},
+			{Suit: app.C, Value: 11},
 
-			{Suit: app.B, Value: 3},
 			{Suit: app.B, Value: 4},
-			{Suit: app.B, Value: 10},
+			{Suit: app.B, Value: 5},
+			{Suit: app.B, Value: 5},
+			{Suit: app.B, Value: 12},
+			{Suit: app.B, Value: 12},
 
-			{Suit: app.A, Value: 4},
-			{Suit: app.A, Value: 9},
-			{Suit: app.A, Value: 12},
-			{Suit: app.JokerB, Value: 15},
+			{Suit: app.A, Value: 7},
+			{Suit: app.A, Value: 11},
 		})
-		jokerValueRand = 4
+		jokerValueRand = 5
 	}
 
 	//{Suit: app.D, Value: 5},
@@ -130,8 +129,6 @@ func (h *Hand) WebGet(c *gin.Context) {
 			}
 		}
 	}
-
-	fmt.Println("当前的纯顺子", pureCards, overCards, jokers)
 
 	// TODO:: 第二步找无效牌中间隙牌+joker分值最高的牌
 	overCards, pureWithCards, jokers := h.findGapMostScoreCards(overCards, jokers)

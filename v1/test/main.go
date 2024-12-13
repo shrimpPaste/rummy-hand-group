@@ -198,28 +198,63 @@ func findBestSequence2(cards []Card) (valid, invalid []Card, score int) {
 	return valid, invalid, score
 }
 
+func handSliceDifference(a, b []Card) []Card {
+	// 用 map 记录 b 中每张卡片的数量
+	bCount := make(map[Card]int)
+	for _, card := range b {
+		bCount[card]++ // 记录每张卡片出现的次数
+	}
+
+	var difference []Card
+	// 遍历 a，检查每张卡片是否在 b 中以及出现的次数
+	for _, card := range a {
+		if count, found := bCount[card]; found && count > 0 {
+			bCount[card]-- // b 中减少一次计数
+		} else {
+			difference = append(difference, card) // 如果 b 中没有或计数为 0，则加入差值
+		}
+	}
+
+	return difference
+}
+
 func main() {
+	//cards1 := []Card{
+	//	{Suit: "A", Value: 1},
+	//	{Suit: "A", Value: 2},
+	//	{Suit: "A", Value: 3},
+	//	{Suit: "A", Value: 12},
+	//	{Suit: "A", Value: 12},
+	//}
+	//var valid, invalid []Card
+	//
+	//valid1, invalid1, score1 := findBestSequence(cards1)
+	//valid2, invalid2, score2 := findBestSequence2(cards1)
+	//
+	////score2 = 0
+	//if score1 > score2 {
+	//	valid = valid1
+	//	invalid = invalid1
+	//} else {
+	//	valid = valid2
+	//	invalid = invalid2
+	//}
+	//
+	//fmt.Printf("Test Case 1: Valid: %v, Invalid: %v\n", valid, invalid)
+
 	cards1 := []Card{
-		{Suit: "A", Value: 1},
-		{Suit: "A", Value: 2},
-		{Suit: "A", Value: 3},
-		{Suit: "A", Value: 12},
-		{Suit: "A", Value: 12},
-	}
-	var valid, invalid []Card
-
-	valid1, invalid1, score1 := findBestSequence(cards1)
-	valid2, invalid2, score2 := findBestSequence2(cards1)
-
-	//score2 = 0
-	if score1 > score2 {
-		valid = valid1
-		invalid = invalid1
-	} else {
-		valid = valid2
-		invalid = invalid2
+		{Suit: "A", Value: 4},
+		{Suit: "A", Value: 5},
+		{Suit: "A", Value: 5},
+		{Suit: "A", Value: 8},
 	}
 
-	fmt.Printf("Test Case 1: Valid: %v, Invalid: %v\n", valid, invalid)
+	cards2 := []Card{
+		{Suit: "A", Value: 4},
+		{Suit: "A", Value: 5},
+		{Suit: "A", Value: 5},
+	}
 
+	res := handSliceDifference(cards1, cards2)
+	fmt.Println(res)
 }

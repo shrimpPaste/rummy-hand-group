@@ -598,7 +598,7 @@ func (h *Hand) findGapMostScoreCards(overCards, jokers []app.Card) ([]app.Card, 
 		}
 	}
 
-	for i, joker := range jokers {
+	for _, joker := range jokers {
 		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
 		if len(bestCards) > 0 {
 			bestCards = append(bestCards, joker)
@@ -607,7 +607,8 @@ func (h *Hand) findGapMostScoreCards(overCards, jokers []app.Card) ([]app.Card, 
 
 			overCards = h.handSliceDifference(overCards, bestCards)
 
-			jokers = h.removeByIndex(jokers, i)
+			jokers = h.handSliceDifference(jokers, bestCards)
+			//jokers = h.removeByIndex(jokers, i)
 			gapScore = g
 		}
 	}
