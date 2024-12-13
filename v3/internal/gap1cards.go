@@ -561,6 +561,12 @@ func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.C
 				result = append(result, card)
 			}
 		}
+		// TODO:: 为什么这里要return出去？
+		//return result
+	}
+
+	if len(cards) <= 0 {
+		// 不添加会panic
 		return result
 	}
 
@@ -578,6 +584,9 @@ func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.C
 }
 
 func (h *Hand) findGapMostScoreCards(overCards, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
+	// TODO:: 当癞子变多，找不到带joker的顺子则一个都找不到
+	// TODO:: 这里只能找到间隙为1的，找间隙牌应该再实现一个不区分癞子的，把他都找出来，假设癞子是红桃6，同时你有两个红桃6，一个红桃8
+	// TODO:: 那么你应该能够得到 68 6这样子的一个带joker的顺子 进入这种情况是要不满足两个顺子的情况。
 	suitCards := make(map[string][]app.Card, 4)
 	h.groupCards(suitCards, overCards)
 	gapScore := map[int][]app.Card{}

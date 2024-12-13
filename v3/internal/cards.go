@@ -36,27 +36,28 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 		h.SetCards(headCardRes)
 
-		jokerValueRand = rand.Intn(13)
+		jokerValueRand = rand.Intn(13) + 1
 
 	} else {
 		h.SetCards([]app.Card{
-			{Suit: app.C, Value: 3},
-			{Suit: app.C, Value: 4},
-			{Suit: app.C, Value: 4},
-			{Suit: app.C, Value: 5},
-			{Suit: app.C, Value: 7},
+			{Suit: app.D, Value: 3},
+			{Suit: app.D, Value: 6},
+			{Suit: app.D, Value: 11},
+
 			{Suit: app.C, Value: 11},
+			{Suit: app.C, Value: 12},
+			{Suit: app.C, Value: 13},
+			{Suit: app.C, Value: 13},
 
-			{Suit: app.B, Value: 4},
-			{Suit: app.B, Value: 5},
-			{Suit: app.B, Value: 5},
-			{Suit: app.B, Value: 12},
-			{Suit: app.B, Value: 12},
+			{Suit: app.B, Value: 6},
+			{Suit: app.B, Value: 8},
+			{Suit: app.B, Value: 11},
 
-			{Suit: app.A, Value: 7},
-			{Suit: app.A, Value: 11},
+			{Suit: app.A, Value: 6},
+			{Suit: app.JokerA, Value: 15},
+			{Suit: app.JokerB, Value: 14},
 		})
-		jokerValueRand = 5
+		jokerValueRand = 6
 	}
 
 	//{Suit: app.D, Value: 5},
