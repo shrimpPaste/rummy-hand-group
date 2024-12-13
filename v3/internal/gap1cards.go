@@ -555,7 +555,8 @@ func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.C
 
 	if result[len(result)-1].Value == 1 {
 		for index, card := range cards {
-			if (card.Value == 13 || card.Value == 12) && len(cards) > 2 {
+			// && len(cards) > 2  ? TODO::为什么当时要写大于2？
+			if card.Value == 13 || card.Value == 12 {
 				cards = h.removeByIndex(cards, index)
 				result = append(result, card)
 			}
