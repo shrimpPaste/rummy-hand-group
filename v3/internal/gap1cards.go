@@ -611,12 +611,10 @@ func (h *Hand) findGapMostScoreCards(overCards, jokers []app.Card) ([]app.Card, 
 		}
 	}
 
-	for _, cards := range gapScore {
-		overCards = append(overCards, cards...)
-	}
-	//for _, cards := range suitCards {
+	//for _, cards := range gapScore {
 	//	overCards = append(overCards, cards...)
 	//}
+
 	return overCards, result, jokers
 }
 
