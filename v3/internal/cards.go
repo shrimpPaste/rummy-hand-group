@@ -134,6 +134,9 @@ func (h *Hand) WebGet(c *gin.Context) {
 	// TODO:: 第二步找无效牌中间隙牌+joker分值最高的牌
 	overCards, pureWithCards, jokers := h.findGapMostScoreCards(overCards, jokers)
 
+	// TODO::1. 如果有一个joker，就要去找间隙 < 3
+	// TODO::2. 如果有2个joker，就要去找间隙 == 3 如果还是没有 就去两个joker + 一个点数最大的牌。
+
 	// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (不带joker的癞子)
 	overCards, setCards, scoreMapCards = h.findSet(overCards)
 
