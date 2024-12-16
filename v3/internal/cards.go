@@ -42,43 +42,23 @@ func (h *Hand) WebGet(c *gin.Context) {
 		h.SetCards([]app.Card{
 			{Suit: app.D, Value: 1},
 			{Suit: app.D, Value: 3},
+			{Suit: app.D, Value: 9},
 
-			{Suit: app.C, Value: 6},
+			{Suit: app.C, Value: 9},
 
-			{Suit: app.B, Value: 3},
-			{Suit: app.B, Value: 11},
-			{Suit: app.B, Value: 12},
+			{Suit: app.B, Value: 7},
+			{Suit: app.B, Value: 8},
+			{Suit: app.B, Value: 13},
 
 			{Suit: app.A, Value: 1},
+			{Suit: app.A, Value: 1},
 			{Suit: app.A, Value: 3},
-			{Suit: app.A, Value: 8},
-			{Suit: app.A, Value: 9},
-			{Suit: app.A, Value: 10},
-			{Suit: app.A, Value: 11},
 			{Suit: app.A, Value: 12},
+			{Suit: app.A, Value: 13},
+			{Suit: app.JokerA, Value: 15},
 		})
-		jokerValueRand = 9
+		jokerValueRand = 13
 	}
-
-	//h.SetCards([]app.Card{
-	//	{Suit: app.D, Value: 11},
-	//	{Suit: app.D, Value: 1},
-	//	{Suit: app.D, Value: 12},
-	//
-	//	{Suit: app.C, Value: 7},
-	//	{Suit: app.C, Value: 10},
-	//	{Suit: app.C, Value: 11},
-	//	{Suit: app.C, Value: 12},
-	//
-	//	{Suit: app.B, Value: 2},
-	//	{Suit: app.B, Value: 10},
-	//	{Suit: app.B, Value: 11},
-	//
-	//	{Suit: app.A, Value: 13},
-	//	{Suit: app.A, Value: 3},
-	//	{Suit: app.A, Value: 11},
-	//})
-	//jokerValueRand = 10
 
 	jokerRand := app.Card{Suit: app.D, Value: jokerValueRand}
 
@@ -93,12 +73,8 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	h.SetWildJoker(jokerRand)
 
-	jokers, overCards := h.findJoker(h.cards)
-	// TODO:: 一开始找的时候，不要抽离Joker，在找完纯顺子再去找Joker。
-
-	tempOverCards := overCards
 	// TODO::第一步先去找牌堆中所有的三条,同时剩下的仍然能组成顺子
-	overCards, setCards, scoreMapCards := h.findSet(overCards)
+	overCards, setCards, scoreMapCards := h.findSet(h.cards)
 
 	// TODO:: scoreMapCards 找到的顺子没有被删掉
 
@@ -107,51 +83,46 @@ func (h *Hand) WebGet(c *gin.Context) {
 	if h.judgeIsHave1Seq(pureCards) {
 		// 先找三条后还能找到找到顺子
 		fmt.Println("pure", scoreMapCards)
-	} else {
-		overCards = tempOverCards
-		setCards = []app.Card{}
-		// 找不到顺子
-		pureCards, overCards = h.GetPure(overCards)
-		// TODO:: 第一步鉴定是否有顺子没有则中断
-		if !h.judgeIsHave1Seq(pureCards) {
-			overCards = append(overCards, jokers...)
-			pureCards, overCards = h.GetPure(overCards)
-			jokers = h.handSliceDifference(jokers, pureCards)
 
-			if !h.judgeIsHave1Seq(pureCards) {
-				c.JSON(200, gin.H{
-					"myCards":       getCardsResult(h.cards),
-					"calcCards":     getCardsResult([]app.Card{}),
-					"pure":          getCardsResult([]app.Card{}),
-					"pureWithJoker": getCardsResult([]app.Card{}),
-					"set":           getCardsResult([]app.Card{}),
-					"setWithJoker":  getCardsResult([]app.Card{}),
-					"invalid":       getCardsResult(overCards),
-					"joker":         getCardsResult([]app.Card{}),
-					"sysJoker":      getCardsResult([]app.Card{h.wild}),
-				})
-				return
-			}
-		}
+		// TODO:: 一开始找的时候，不要抽离Joker，在找完纯顺子再去找Joker。
+	} else {
+		c.JSON(200, gin.H{
+			"myCards":       getCardsResult(h.cards),
+			"calcCards":     getCardsResult([]app.Card{}),
+			"pure":          getCardsResult([]app.Card{}),
+			"pureWithJoker": getCardsResult([]app.Card{}),
+			"set":           getCardsResult([]app.Card{}),
+			"setWithJoker":  getCardsResult([]app.Card{}),
+			"invalid":       getCardsResult(overCards),
+			"joker":         getCardsResult([]app.Card{}),
+			"sysJoker":      getCardsResult([]app.Card{h.wild}),
+		})
+		return
 	}
+
+	jokers, overCards := h.findJoker(overCards)
 
 	// TODO:: 第二步找无效牌中间隙牌+joker分值最高的牌
 	//overCards, pureWithCards, jokers := h.findGapMostScoreCards(overCards, jokers)
 
+	var setWithJoker, pureWithCards, setCards2 []app.Card
+
 	// TODO::1. 如果有一个joker，就要去找间隙 < 3
-	overCards, pureWithCards, jokers := h.findGapsByJoker(overCards, jokers)
+	overCards, pureWithCards, jokers = h.findGapsByJoker(overCards, jokers)
 	// TODO::2. 如果有2个joker，就要去找间隙 == 3 如果还是没有 就去两个joker + 一个点数最大的牌。
 
-	// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (不带joker的癞子)
-	overCards, setCards2, scoreMapCards := h.findSet(overCards)
+	if len(pureCards) > 6 || len(pureCards) >= 3 && len(pureWithCards) >= 3 {
+		// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (不带joker的癞子)
+		overCards, setCards2, scoreMapCards = h.findSet(overCards)
 
-	if len(setCards2) > 0 {
-		setCards2 = h.handSliceDifference(setCards2, setCards)
-		setCards = append(setCards, setCards2...)
+		if len(setCards2) > 0 {
+			setCards2 = h.handSliceDifference(setCards2, setCards)
+			setCards = append(setCards, setCards2...)
+		}
+
+		// TODO:: 第四步从无效牌中找到两个相同值但是花色不同的牌 (带joker的癞子)
+		overCards, setWithJoker, jokers = h.findSetWithJoker2(overCards, jokers)
 	}
-
-	// TODO:: 第四步从无效牌中找到两个相同值但是花色不同的牌 (带joker的癞子)
-	overCards, setWithJoker, jokers := h.findSetWithJoker2(overCards, jokers)
 
 	c.JSON(200, gin.H{
 		"myCards":       getCardsResult(h.cards),

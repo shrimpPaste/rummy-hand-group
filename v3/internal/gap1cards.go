@@ -657,8 +657,8 @@ func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards [
 	suitCards := make(map[string][]app.Card, 4)
 	h.groupCards(suitCards, cards)
 
-	if jokerLen == 1 {
-		// 找间隙小于等于 2 的牌型
+	if jokerLen >= 2 {
+		usedJoker := false
 		for suit, c := range suitCards {
 			var currentComboRes []app.Card
 			for i := 0; i < len(c)-1; i++ {
@@ -666,47 +666,21 @@ func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards [
 
 				for j := i + 1; j < len(c); j++ {
 					gap := c[j].Value - c[j-1].Value
-					if gap > 1 { // 有间隙
-						if gap-1 < 2 { // 可以用 Joker 填补间隙
-							currentCombo = append(currentCombo, c[j])
-						} else {
-							break // Joker 不够用，停止扩展
-						}
-					} else { // 无间隙，直接添加
-						currentCombo = append(currentCombo, c[j])
+					if gap == 0 {
+						continue
 					}
-				}
-				if len(currentCombo) > len(currentComboRes) {
-					currentComboRes = currentCombo
-				}
-			}
-			if len(currentComboRes) >= 2 {
-				currentComboRes = append(currentComboRes, jokers[0])
-				jokers = jokers[1:]
-				pureWithJoker = append(pureWithJoker, currentComboRes...)
-				suitCards[suit] = h.handSliceDifference(c, currentComboRes)
-			}
-		}
-	}
-
-	if jokerLen == 2 {
-		for suit, c := range suitCards {
-			var currentComboRes []app.Card
-			for i := 0; i < len(c)-1; i++ {
-				currentCombo := []app.Card{c[i]}
-				remainingJokers := jokerLen
-
-				for j := i + 1; j < len(c); j++ {
-					gap := c[j].Value - c[j-1].Value
 					if gap > 1 { // 有间隙
-						if gap-1 <= remainingJokers { // 可以用 Joker 填补间隙
-							remainingJokers -= gap - 1
+						if gap-1 <= 3 { // 可以用 Joker 填补间隙
 							currentCombo = append(currentCombo, c[j])
+							jokerLen -= 2
+							usedJoker = true
 						} else {
 							break // Joker 不够用，停止扩展
 						}
 					} else { // 无间隙，直接添加
-						currentCombo = append(currentCombo, c[j])
+						if !usedJoker {
+							currentCombo = append(currentCombo, c[j])
+						}
 					}
 				}
 
@@ -725,6 +699,45 @@ func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards [
 				}
 
 				// 更新结果
+				pureWithJoker = append(pureWithJoker, currentComboRes...)
+				suitCards[suit] = h.handSliceDifference(c, currentComboRes)
+			}
+		}
+	}
+
+	if jokerLen >= 1 {
+		// 找间隙小于等于 2 的牌型
+		for suit, c := range suitCards {
+			var currentComboRes []app.Card
+			for i := 0; i < len(c)-1; i++ {
+				currentCombo := []app.Card{c[i]}
+				isUsed := false
+				for j := i + 1; j < len(c); j++ {
+					gap := c[j].Value - c[j-1].Value
+					if gap == 0 {
+						continue
+					}
+
+					if gap > 1 { // 有间隙
+						if gap-1 < 2 { // 可以用 Joker 填补间隙
+							isUsed = true
+							currentCombo = append(currentCombo, c[j])
+						} else {
+							break // Joker 不够用，停止扩展
+						}
+					} else { // 无间隙，直接添加
+						if !isUsed {
+							currentCombo = append(currentCombo, c[j])
+						}
+					}
+				}
+				if len(currentCombo) > len(currentComboRes) {
+					currentComboRes = currentCombo
+				}
+			}
+			if len(currentComboRes) >= 2 {
+				currentComboRes = append(currentComboRes, jokers[0])
+				jokers = jokers[1:]
 				pureWithJoker = append(pureWithJoker, currentComboRes...)
 				suitCards[suit] = h.handSliceDifference(c, currentComboRes)
 			}
