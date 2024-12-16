@@ -645,3 +645,70 @@ func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) (s
 
 	return gapScore
 }
+
+func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards []app.Card, pureWithJoker []app.Card, Jokers []app.Card) {
+	jokerLen := len(jokers)
+
+	if jokerLen == 0 {
+		return
+	}
+
+	// 分花色
+	suitCards := make(map[string][]app.Card, 4)
+	h.groupCards(suitCards, cards)
+
+	if jokerLen == 1 {
+		// 找间隙小于等于 2 的牌型
+		for suit, c := range suitCards {
+			var currentComboRes []app.Card
+			for i := 0; i < len(c)-1; i++ {
+				currentCombo := []app.Card{c[i]}
+
+				for j := i + 1; j < len(c); j++ {
+					gap := c[j].Value - c[j-1].Value
+					if gap > 1 { // 有间隙
+						if gap-1 <= 2 { // 可以用 Joker 填补间隙
+							currentCombo = append(currentCombo, c[j])
+						} else {
+							break // Joker 不够用，停止扩展
+						}
+					} else { // 无间隙，直接添加
+						currentCombo = append(currentCombo, c[j])
+					}
+				}
+				if len(currentCombo) > len(currentComboRes) {
+					currentComboRes = currentCombo
+				}
+			}
+			if len(currentComboRes) >= 2 {
+				currentComboRes = append(currentComboRes, jokers[0])
+				jokers = jokers[1:]
+				pureWithJoker = append(pureWithJoker, currentComboRes...)
+				suitCards[suit] = h.handSliceDifference(c, currentComboRes)
+			}
+		}
+	}
+
+	for _, c := range suitCards {
+		overCards = append(overCards, c...)
+	}
+
+	return overCards, pureWithJoker, jokers
+
+	//if jokerLen == 2 {
+	//	// 找间隙小于等于 3 的牌型
+	//	found := false
+	//	for i := 0; i < len(cards)-1; i++ {
+	//		if cards[i+1].Value-cards[i].Value <= 3 {
+	//			fmt.Printf("匹配的牌型: %v, %v, Joker, Joker\n", cards[i], cards[i+1])
+	//			found = true
+	//		}
+	//	}
+	//
+	//	// 如果没有匹配，则取点数最大的牌
+	//	if !found {
+	//		maxCard := cards[len(cards)-1]
+	//		fmt.Printf("匹配的牌型: %v, Joker, Joker\n", maxCard)
+	//	}
+	//}
+}

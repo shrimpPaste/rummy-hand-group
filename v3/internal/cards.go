@@ -40,42 +40,45 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	} else {
 		h.SetCards([]app.Card{
-			{Suit: app.D, Value: 11},
 			{Suit: app.D, Value: 1},
-			{Suit: app.D, Value: 12},
+			{Suit: app.D, Value: 2},
+			{Suit: app.D, Value: 3},
+			{Suit: app.D, Value: 4},
+			{Suit: app.D, Value: 5},
+			{Suit: app.D, Value: 5},
 
-			{Suit: app.C, Value: 7},
 			{Suit: app.C, Value: 10},
-			{Suit: app.C, Value: 11},
-			{Suit: app.C, Value: 12},
 
-			{Suit: app.B, Value: 2},
-			{Suit: app.B, Value: 10},
-			{Suit: app.B, Value: 11},
+			{Suit: app.B, Value: 3},
+			{Suit: app.B, Value: 5},
+			{Suit: app.B, Value: 6},
 
-			{Suit: app.A, Value: 13},
-			{Suit: app.A, Value: 3},
-			{Suit: app.A, Value: 11},
+			{Suit: app.A, Value: 7},
+			{Suit: app.A, Value: 8},
+			{Suit: app.A, Value: 9},
 		})
 		jokerValueRand = 10
 	}
 
-	//{Suit: app.D, Value: 5},
-	//{Suit: app.D, Value: 2},
-	//{Suit: app.D, Value: 13},
+	//h.SetCards([]app.Card{
+	//	{Suit: app.D, Value: 11},
+	//	{Suit: app.D, Value: 1},
+	//	{Suit: app.D, Value: 12},
 	//
-	//{Suit: app.C, Value: 4},
-	//{Suit: app.C, Value: 5},
-	//{Suit: app.C, Value: 9},
+	//	{Suit: app.C, Value: 7},
+	//	{Suit: app.C, Value: 10},
+	//	{Suit: app.C, Value: 11},
+	//	{Suit: app.C, Value: 12},
 	//
-	//{Suit: app.B, Value: 3},
-	//{Suit: app.B, Value: 5},
-	//{Suit: app.B, Value: 13},
-	//{Suit: app.B, Value: 11},
-	//{Suit: app.B, Value: 1},
-	//{Suit: app.B, Value: 2},
+	//	{Suit: app.B, Value: 2},
+	//	{Suit: app.B, Value: 10},
+	//	{Suit: app.B, Value: 11},
 	//
-	//{Suit: app.A, Value: 13},
+	//	{Suit: app.A, Value: 13},
+	//	{Suit: app.A, Value: 3},
+	//	{Suit: app.A, Value: 11},
+	//})
+	//jokerValueRand = 10
 
 	jokerRand := app.Card{Suit: app.D, Value: jokerValueRand}
 
@@ -91,6 +94,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 	h.SetWildJoker(jokerRand)
 
 	jokers, overCards := h.findJoker(h.cards)
+	// TODO:: 一开始找的时候，不要抽离Joker，在找完纯顺子再去找Joker。
 
 	tempOverCards := overCards
 	// TODO::第一步先去找牌堆中所有的三条,同时剩下的仍然能组成顺子
@@ -102,7 +106,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 	// TODO:: 第一步鉴定是否有顺子没有则中断
 	if h.judgeIsHave1Seq(pureCards) {
 		// 先找三条后还能找到找到顺子
-		fmt.Println(scoreMapCards)
+		fmt.Println("pure", scoreMapCards)
 	} else {
 		overCards = tempOverCards
 		setCards = []app.Card{}
@@ -132,9 +136,10 @@ func (h *Hand) WebGet(c *gin.Context) {
 	}
 
 	// TODO:: 第二步找无效牌中间隙牌+joker分值最高的牌
-	overCards, pureWithCards, jokers := h.findGapMostScoreCards(overCards, jokers)
+	//overCards, pureWithCards, jokers := h.findGapMostScoreCards(overCards, jokers)
 
 	// TODO::1. 如果有一个joker，就要去找间隙 < 3
+	overCards, pureWithCards, jokers := h.findGapsByJoker(overCards, jokers)
 	// TODO::2. 如果有2个joker，就要去找间隙 == 3 如果还是没有 就去两个joker + 一个点数最大的牌。
 
 	// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (不带joker的癞子)
