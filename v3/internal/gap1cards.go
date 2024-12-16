@@ -646,107 +646,180 @@ func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) (s
 	return gapScore
 }
 
-func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards []app.Card, pureWithJoker []app.Card, Jokers []app.Card) {
-	jokerLen := len(jokers)
-
-	if jokerLen == 0 {
+func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards []app.Card, pureWithJoker []app.Card, remainingJokers []app.Card) {
+	// 无 Joker 的情况直接返回
+	if len(jokers) == 0 {
 		return cards, nil, jokers
 	}
 
-	// 分花色
+	// 分组牌型
 	suitCards := make(map[string][]app.Card, 4)
 	h.groupCards(suitCards, cards)
 
-	if jokerLen >= 2 {
-		usedJoker := false
-		for suit, c := range suitCards {
-			var currentComboRes []app.Card
-			for i := 0; i < len(c)-1; i++ {
-				currentCombo := []app.Card{c[i]}
+	// 使用 Joker 填补间隙
+	pureWithJoker, jokers = h.fillGapsWithJokers(suitCards, jokers)
 
-				for j := i + 1; j < len(c); j++ {
-					gap := c[j].Value - c[j-1].Value
-					if gap == 0 {
-						continue
-					}
-					if gap > 1 { // 有间隙
-						if gap-1 <= 3 { // 可以用 Joker 填补间隙
-							currentCombo = append(currentCombo, c[j])
-							jokerLen -= 2
-							usedJoker = true
-						} else {
-							break // Joker 不够用，停止扩展
-						}
-					} else { // 无间隙，直接添加
-						if !usedJoker {
-							currentCombo = append(currentCombo, c[j])
-						}
-					}
-				}
-
-				// 检查当前组合是否更优
-				if len(currentCombo) > len(currentComboRes) {
-					currentComboRes = currentCombo
-				}
-			}
-
-			// 如果找到的组合符合条件，添加 Joker 并清理牌
-			if len(currentComboRes) >= 2 {
-				// 添加两张 Joker
-				if len(jokers) >= 2 {
-					currentComboRes = append(currentComboRes, jokers[0], jokers[1])
-					jokers = jokers[2:]
-				}
-
-				// 更新结果
-				pureWithJoker = append(pureWithJoker, currentComboRes...)
-				suitCards[suit] = h.handSliceDifference(c, currentComboRes)
-			}
-		}
-	}
-
-	if jokerLen >= 1 {
-		// 找间隙小于等于 2 的牌型
-		for suit, c := range suitCards {
-			var currentComboRes []app.Card
-			for i := 0; i < len(c)-1; i++ {
-				currentCombo := []app.Card{c[i]}
-				isUsed := false
-				for j := i + 1; j < len(c); j++ {
-					gap := c[j].Value - c[j-1].Value
-					if gap == 0 {
-						continue
-					}
-
-					if gap > 1 { // 有间隙
-						if gap-1 < 2 { // 可以用 Joker 填补间隙
-							isUsed = true
-							currentCombo = append(currentCombo, c[j])
-						} else {
-							break // Joker 不够用，停止扩展
-						}
-					} else { // 无间隙，直接添加
-						if !isUsed {
-							currentCombo = append(currentCombo, c[j])
-						}
-					}
-				}
-				if len(currentCombo) > len(currentComboRes) {
-					currentComboRes = currentCombo
-				}
-			}
-			if len(currentComboRes) >= 2 {
-				currentComboRes = append(currentComboRes, jokers[0])
-				jokers = jokers[1:]
-				pureWithJoker = append(pureWithJoker, currentComboRes...)
-				suitCards[suit] = h.handSliceDifference(c, currentComboRes)
-			}
-		}
-	}
-
+	// 剩余的牌
 	for _, c := range suitCards {
 		overCards = append(overCards, c...)
 	}
 
 	return overCards, pureWithJoker, jokers
+}
+
+// 使用 Joker 填补间隙逻辑
+func (h *Hand) fillGapsWithJokers(suitCards map[string][]app.Card, jokers []app.Card) ([]app.Card, []app.Card) {
+	var result []app.Card
+
+	// 处理间隙为1的
+	for suit, cards := range suitCards {
+		var overCards, bestCombo []app.Card
+		if len(cards) >= 2 {
+			// 找间隙为1的
+			overCards, bestCombo, jokers = h.findBestComboGap1(cards, jokers)
+			if len(bestCombo) >= 3 {
+				result = append(result, bestCombo...)
+
+				// 更新当前花色的剩余牌
+				suitCards[suit] = overCards
+			}
+		}
+	}
+
+	// 处理间隙小于等于3
+	for suit, cards := range suitCards {
+		var overCards, bestCombo []app.Card
+		// 找间隙为1的
+		overCards, bestCombo, jokers = h.findBestComboGap2(cards, jokers)
+		if len(bestCombo) >= 3 {
+			result = append(result, bestCombo...)
+
+			// 更新当前花色的剩余牌
+			suitCards[suit] = overCards
+		}
+	}
+
+	return result, jokers
+}
+
+func (h *Hand) findBestComboGap1(cards []app.Card, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
+	if len(jokers) <= 0 {
+		return cards, nil, jokers
+	}
+
+	var result, overCards []app.Card
+	isUsed := false
+	// 间隙为1的
+	for i := 0; i < len(cards)-1; i++ {
+		for j := i + 1; j < len(cards); j++ {
+			if i > len(cards)-1 {
+				break
+			}
+			gap := cards[j].Value - cards[i].Value
+			if gap == 0 {
+				overCards = append(overCards, cards[i])
+				if len(result) > 0 {
+					result = result[:len(result)-1]
+				}
+
+				continue
+			} else if gap == 1 {
+				if len(result) == 0 {
+					result = append(result, cards[i], cards[j])
+				} else {
+					result = append(result, cards[j])
+				}
+				i++
+				continue
+			} else if gap == 2 && !isUsed {
+				if len(result) >= 2 && result[len(result)-1].Value == cards[i].Value {
+					result = append(result, jokers[0])
+					result = append(result, cards[j])
+				} else {
+					result = append(result, cards[i])
+					result = append(result, jokers[0])
+					result = append(result, cards[j])
+				}
+
+				jokers = jokers[1:]
+				i = j
+				isUsed = true
+			} else {
+				if len(result) == 2 && len(jokers) >= 1 {
+					result = append(result, jokers[0])
+					jokers = jokers[1:]
+					overCards = append(overCards, cards[i+1:]...)
+					i = len(cards)
+				} else {
+					overCards = append(overCards, cards[i])
+					i++
+					break
+				}
+			}
+		}
+	}
+
+	if len(result) == 2 && len(jokers) >= 1 {
+		result = append(result, jokers[0])
+		jokers = jokers[1:]
+	}
+
+	if len(overCards) >= 2 && len(jokers) >= 1 {
+		overCards2, result2, jokers2 := h.findBestComboGap1(overCards, jokers)
+		if len(result2) >= 3 {
+			result = append(result, result2...)
+			jokers = jokers2
+			overCards = overCards2
+		}
+	}
+	return overCards, result, jokers
+}
+
+func (h *Hand) findBestComboGap2(cards []app.Card, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
+	if len(jokers) <= 0 {
+		return cards, nil, jokers
+	}
+
+	var result, overCards []app.Card
+	isUsed := false
+	// 间隙为1的
+	for i := 0; i < len(cards)-1; i++ {
+		for j := i + 1; j < len(cards); j++ {
+			gap := cards[j].Value - cards[i].Value
+			if gap == 0 {
+				overCards = append(overCards, cards[i])
+				i++
+				continue
+			} else if gap == 1 {
+				result = append(result, cards[i], cards[j])
+				i++
+				continue
+			} else if gap == 3 && !isUsed {
+				if len(result) == 0 {
+					result = append(result, cards[i])
+				}
+				result = append(result, jokers[0], jokers[1])
+				result = append(result, cards[j])
+
+				jokers = jokers[2:]
+				i = j
+				isUsed = true
+			} else {
+				overCards = append(overCards, cards[i])
+				i++
+				break
+			}
+		}
+	}
+
+	if len(overCards) >= 2 && len(jokers) >= 2 {
+		overCards2, result2, jokers2 := h.findBestComboGap2(overCards, jokers)
+		if len(result2) >= 3 {
+			result = append(result, result2...)
+			jokers = jokers2
+			overCards = overCards2
+		}
+	}
+
+	return overCards, result, jokers
 }

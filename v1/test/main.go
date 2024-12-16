@@ -218,43 +218,146 @@ func handSliceDifference(a, b []Card) []Card {
 	return difference
 }
 
+func findGap(cards []Card, jokers []Card) ([]Card, []Card, []Card) {
+	var result, overCards []Card
+
+	singleCards := removeDuplicates(cards)
+	overCards = handSliceDifference(cards, singleCards)
+	isUsed := false
+
+	var tempResult []Card
+
+	for i := 0; i < len(singleCards)-1; i++ {
+		if i == len(singleCards) && singleCards[i].Value-tempResult[i-1].Value == 1 {
+			tempResult = append(tempResult, singleCards[i-1])
+			break
+		}
+		for j := i + 1; j < len(singleCards); j++ {
+			gap := singleCards[j].Value - singleCards[i].Value
+			if gap == 1 {
+				tempResult = append(tempResult, singleCards[i], singleCards[i+1])
+				i++
+				break
+			} else if gap == 2 && !isUsed {
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], jokers[0], singleCards[j])
+					i++
+					break
+				} else {
+					tempResult = append(tempResult, jokers[0], singleCards[i])
+				}
+				jokers = jokers[1:]
+				isUsed = true
+			} else {
+				overCards = append(overCards, singleCards[i])
+				if j == len(cards)-1 {
+					overCards = append(overCards, singleCards[j])
+				}
+				break
+			}
+		}
+
+	}
+
+	if len(tempResult) >= 3 {
+		result = append(result, tempResult...)
+	}
+
+	if len(tempResult) == 2 && len(jokers) > 0 {
+		result = append(result, tempResult...)
+		result = append(result, jokers[0])
+		jokers = jokers[1:]
+	}
+
+	return overCards, result, jokers
+}
+
+func removeDuplicates(cards []Card) []Card {
+	// 使用 map 来记录已经出现过的 Card
+	seen := make(map[Card]bool)
+	var result []Card
+
+	for _, card := range cards {
+		// 如果 map 中没有这个 Card，则添加到结果中，并标记为已见
+		if _, ok := seen[card]; !ok {
+			seen[card] = true
+			result = append(result, card)
+		}
+	}
+
+	return result
+}
+
+func findGap2(cards []Card, jokers []Card) ([]Card, []Card, []Card) {
+	var result, overCards []Card
+
+	isUsed := false
+	// 间隙为1的
+	for i := 0; i < len(cards)-1; i++ {
+		for j := i + 1; j < len(cards); j++ {
+			gap := cards[j].Value - cards[i].Value
+			if gap == 0 {
+				overCards = append(overCards, cards[i])
+				i++
+				continue
+			}
+			if gap == 1 {
+				result = append(result, cards[i], cards[j])
+				i++
+				continue
+			}
+			if gap == 3 && !isUsed {
+				result = append(result, jokers[0], jokers[1])
+				result = append(result, cards[j])
+
+				jokers = jokers[2:]
+				i = j
+				isUsed = true
+			}
+		}
+	}
+
+	return overCards, result, jokers
+}
+
 func main() {
+
+	//cards1 := []Card{
+	//	{Suit: "A", Value: 2},
+	//	{Suit: "A", Value: 4},
+	//	{Suit: "A", Value: 6},
+	//	{Suit: "A", Value: 12},
+	//}
+
 	//cards1 := []Card{
 	//	{Suit: "A", Value: 1},
-	//	{Suit: "A", Value: 2},
 	//	{Suit: "A", Value: 3},
-	//	{Suit: "A", Value: 12},
-	//	{Suit: "A", Value: 12},
+	//	{Suit: "A", Value: 3},
+	//	{Suit: "A", Value: 4},
 	//}
-	//var valid, invalid []Card
-	//
-	//valid1, invalid1, score1 := findBestSequence(cards1)
-	//valid2, invalid2, score2 := findBestSequence2(cards1)
-	//
-	////score2 = 0
-	//if score1 > score2 {
-	//	valid = valid1
-	//	invalid = invalid1
-	//} else {
-	//	valid = valid2
-	//	invalid = invalid2
-	//}
-	//
-	//fmt.Printf("Test Case 1: Valid: %v, Invalid: %v\n", valid, invalid)
 
 	cards1 := []Card{
-		{Suit: "A", Value: 4},
-		{Suit: "A", Value: 5},
-		{Suit: "A", Value: 5},
+		{Suit: "A", Value: 1},
+		{Suit: "A", Value: 1},
+		{Suit: "A", Value: 7},
 		{Suit: "A", Value: 8},
+		{Suit: "A", Value: 10},
 	}
 
-	cards2 := []Card{
-		{Suit: "A", Value: 4},
-		{Suit: "A", Value: 5},
-		{Suit: "A", Value: 5},
+	//cards1 := []Card{
+	//	{Suit: "A", Value: 4},
+	//	{Suit: "A", Value: 4},
+	//	{Suit: "A", Value: 8},
+	//	{Suit: "A", Value: 8},
+	//	{Suit: "A", Value: 9},
+	//}
+
+	jokers := []Card{
+		{Suit: "D", Value: 5},
 	}
 
-	res := handSliceDifference(cards1, cards2)
-	fmt.Println(res)
+	var result, overCards []Card
+
+	overCards, result, jokers = findGap(cards1, jokers)
+	fmt.Println(overCards, result, jokers)
 }

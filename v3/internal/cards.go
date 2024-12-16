@@ -26,6 +26,10 @@ func (h *Hand) WebGet(c *gin.Context) {
 		ShuffleDeck(desk)
 		headCard := DealCards(&desk, 13)
 
+		for _, cc := range headCard {
+			fmt.Printf("{Suit: app.%s, Value: %d},\n", cc.Suit, cc.Value)
+		}
+
 		suitCards := make(map[string][]app.Card, 4)
 		h.groupCards(suitCards, headCard)
 
@@ -37,27 +41,25 @@ func (h *Hand) WebGet(c *gin.Context) {
 		h.SetCards(headCardRes)
 
 		jokerValueRand = rand.Intn(13) + 1
+		fmt.Println("Joker值是", jokerValueRand)
 
 	} else {
 		h.SetCards([]app.Card{
-			{Suit: app.D, Value: 1},
+			{Suit: app.B, Value: 12},
+			{Suit: app.A, Value: 4},
+			{Suit: app.D, Value: 4},
+			{Suit: app.B, Value: 4},
+			{Suit: app.D, Value: 6},
+			{Suit: app.D, Value: 8},
+			{Suit: app.B, Value: 11},
 			{Suit: app.D, Value: 3},
+			{Suit: app.A, Value: 8},
+			{Suit: app.B, Value: 10},
 			{Suit: app.D, Value: 9},
-
-			{Suit: app.C, Value: 9},
-
-			{Suit: app.B, Value: 7},
-			{Suit: app.B, Value: 8},
-			{Suit: app.B, Value: 13},
-
-			{Suit: app.A, Value: 1},
-			{Suit: app.A, Value: 1},
-			{Suit: app.A, Value: 3},
+			{Suit: app.D, Value: 5},
 			{Suit: app.A, Value: 12},
-			{Suit: app.A, Value: 13},
-			{Suit: app.JokerA, Value: 15},
 		})
-		jokerValueRand = 13
+		jokerValueRand = 5
 	}
 
 	jokerRand := app.Card{Suit: app.D, Value: jokerValueRand}
@@ -93,7 +95,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 			"pureWithJoker": getCardsResult([]app.Card{}),
 			"set":           getCardsResult([]app.Card{}),
 			"setWithJoker":  getCardsResult([]app.Card{}),
-			"invalid":       getCardsResult(overCards),
+			"invalid":       getCardsResult(h.cards),
 			"joker":         getCardsResult([]app.Card{}),
 			"sysJoker":      getCardsResult([]app.Card{h.wild}),
 		})
@@ -111,7 +113,7 @@ func (h *Hand) WebGet(c *gin.Context) {
 	overCards, pureWithCards, jokers = h.findGapsByJoker(overCards, jokers)
 	// TODO::2. 如果有2个joker，就要去找间隙 == 3 如果还是没有 就去两个joker + 一个点数最大的牌。
 
-	if len(pureCards) > 6 || len(pureCards) >= 3 && len(pureWithCards) >= 3 {
+	if len(pureCards) >= 6 || (len(pureCards) >= 3 && len(pureWithCards) >= 3) {
 		// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (不带joker的癞子)
 		overCards, setCards2, scoreMapCards = h.findSet(overCards)
 
@@ -122,6 +124,9 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 		// TODO:: 第四步从无效牌中找到两个相同值但是花色不同的牌 (带joker的癞子)
 		overCards, setWithJoker, jokers = h.findSetWithJoker2(overCards, jokers)
+	} else {
+		overCards = append(overCards, setCards...)
+		setCards = []app.Card{}
 	}
 
 	c.JSON(200, gin.H{
