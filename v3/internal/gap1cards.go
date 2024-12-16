@@ -650,7 +650,7 @@ func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards [
 	jokerLen := len(jokers)
 
 	if jokerLen == 0 {
-		return
+		return cards, nil, jokers
 	}
 
 	// 分花色
@@ -667,7 +667,7 @@ func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards [
 				for j := i + 1; j < len(c); j++ {
 					gap := c[j].Value - c[j-1].Value
 					if gap > 1 { // 有间隙
-						if gap-1 <= 2 { // 可以用 Joker 填补间隙
+						if gap-1 < 2 { // 可以用 Joker 填补间隙
 							currentCombo = append(currentCombo, c[j])
 						} else {
 							break // Joker 不够用，停止扩展
@@ -689,26 +689,51 @@ func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards [
 		}
 	}
 
+	if jokerLen == 2 {
+		for suit, c := range suitCards {
+			var currentComboRes []app.Card
+			for i := 0; i < len(c)-1; i++ {
+				currentCombo := []app.Card{c[i]}
+				remainingJokers := jokerLen
+
+				for j := i + 1; j < len(c); j++ {
+					gap := c[j].Value - c[j-1].Value
+					if gap > 1 { // 有间隙
+						if gap-1 <= remainingJokers { // 可以用 Joker 填补间隙
+							remainingJokers -= gap - 1
+							currentCombo = append(currentCombo, c[j])
+						} else {
+							break // Joker 不够用，停止扩展
+						}
+					} else { // 无间隙，直接添加
+						currentCombo = append(currentCombo, c[j])
+					}
+				}
+
+				// 检查当前组合是否更优
+				if len(currentCombo) > len(currentComboRes) {
+					currentComboRes = currentCombo
+				}
+			}
+
+			// 如果找到的组合符合条件，添加 Joker 并清理牌
+			if len(currentComboRes) >= 2 {
+				// 添加两张 Joker
+				if len(jokers) >= 2 {
+					currentComboRes = append(currentComboRes, jokers[0], jokers[1])
+					jokers = jokers[2:]
+				}
+
+				// 更新结果
+				pureWithJoker = append(pureWithJoker, currentComboRes...)
+				suitCards[suit] = h.handSliceDifference(c, currentComboRes)
+			}
+		}
+	}
+
 	for _, c := range suitCards {
 		overCards = append(overCards, c...)
 	}
 
 	return overCards, pureWithJoker, jokers
-
-	//if jokerLen == 2 {
-	//	// 找间隙小于等于 3 的牌型
-	//	found := false
-	//	for i := 0; i < len(cards)-1; i++ {
-	//		if cards[i+1].Value-cards[i].Value <= 3 {
-	//			fmt.Printf("匹配的牌型: %v, %v, Joker, Joker\n", cards[i], cards[i+1])
-	//			found = true
-	//		}
-	//	}
-	//
-	//	// 如果没有匹配，则取点数最大的牌
-	//	if !found {
-	//		maxCard := cards[len(cards)-1]
-	//		fmt.Printf("匹配的牌型: %v, Joker, Joker\n", maxCard)
-	//	}
-	//}
 }

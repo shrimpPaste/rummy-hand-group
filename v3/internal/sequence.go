@@ -119,10 +119,8 @@ func (h *Hand) findBestSeqLogic(cards []app.Card) (pureCards []app.Card) {
 
 	if score1 > score2 {
 		pureCards = valid1
-		//overCards = invalid1
 	} else {
 		pureCards = valid2
-		//overCards = invalid2
 	}
 
 	return pureCards
@@ -242,11 +240,11 @@ func findBestSequence2(cards []app.Card) (valid, invalid []app.Card, score int) 
 
 		// 对invalid中的卡片递归查找序列
 		if len(invalid) >= 3 {
-			valid2, invalid2, score2 := findBestSequence2(invalid)
+			valid2, invalid2, _ := findBestSequence2(invalid)
 
 			if len(valid2) >= 3 {
 				valid = append(valid, valid2...)
-				score += score2
+				//score += score2
 
 				valid2Map := make(map[app.Card]bool)
 				for _, card := range valid2 {
@@ -268,11 +266,11 @@ func findBestSequence2(cards []app.Card) (valid, invalid []app.Card, score int) 
 		}
 	} else {
 		if len(invalid) >= 3 {
-			valid2, invalid2, score2 := findBestSequence2(invalid)
+			valid2, invalid2, _ := findBestSequence2(invalid)
 
 			if len(valid2) >= 3 {
 				valid = append(valid, valid2...)
-				score += score2
+				//score += score2
 
 				valid2Map := make(map[app.Card]bool)
 				for _, card := range valid2 {

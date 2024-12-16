@@ -41,23 +41,23 @@ func (h *Hand) WebGet(c *gin.Context) {
 	} else {
 		h.SetCards([]app.Card{
 			{Suit: app.D, Value: 1},
-			{Suit: app.D, Value: 2},
 			{Suit: app.D, Value: 3},
-			{Suit: app.D, Value: 4},
-			{Suit: app.D, Value: 5},
-			{Suit: app.D, Value: 5},
 
-			{Suit: app.C, Value: 10},
+			{Suit: app.C, Value: 6},
 
 			{Suit: app.B, Value: 3},
-			{Suit: app.B, Value: 5},
-			{Suit: app.B, Value: 6},
+			{Suit: app.B, Value: 11},
+			{Suit: app.B, Value: 12},
 
-			{Suit: app.A, Value: 7},
+			{Suit: app.A, Value: 1},
+			{Suit: app.A, Value: 3},
 			{Suit: app.A, Value: 8},
 			{Suit: app.A, Value: 9},
+			{Suit: app.A, Value: 10},
+			{Suit: app.A, Value: 11},
+			{Suit: app.A, Value: 12},
 		})
-		jokerValueRand = 10
+		jokerValueRand = 9
 	}
 
 	//h.SetCards([]app.Card{
@@ -143,7 +143,12 @@ func (h *Hand) WebGet(c *gin.Context) {
 	// TODO::2. 如果有2个joker，就要去找间隙 == 3 如果还是没有 就去两个joker + 一个点数最大的牌。
 
 	// TODO:: 第三步从无效牌中找到两个相同值但是花色不同的牌 (不带joker的癞子)
-	overCards, setCards, scoreMapCards = h.findSet(overCards)
+	overCards, setCards2, scoreMapCards := h.findSet(overCards)
+
+	if len(setCards2) > 0 {
+		setCards2 = h.handSliceDifference(setCards2, setCards)
+		setCards = append(setCards, setCards2...)
+	}
 
 	// TODO:: 第四步从无效牌中找到两个相同值但是花色不同的牌 (带joker的癞子)
 	overCards, setWithJoker, jokers := h.findSetWithJoker2(overCards, jokers)
