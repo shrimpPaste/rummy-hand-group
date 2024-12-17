@@ -675,8 +675,47 @@ func (h *Hand) fillGapsWithJokers(suitCards map[string][]app.Card, jokers []app.
 	for suit, cards := range suitCards {
 		var overCards, bestCombo []app.Card
 		if len(cards) >= 2 {
-			// 找间隙为1的 TODO:: 找不到 Q K A的
-			overCards, bestCombo, jokers = h.findBestComboGap1(cards, jokers)
+			// 找间隙为1的
+			overCards1, result1, overJokers1 := h.findBestComboGap1(cards, jokers)
+			resultScore1 := h.calculateScore(result1)
+
+			// 处理A == 14的情况
+			cards2 := cards
+			for i := range cards2 {
+				if cards2[i].Value == 1 {
+					cards2[i].Value = 14
+				}
+			}
+			overCards2, result2, overJokers2 := h.findBestComboGap1(cards2, jokers)
+			resultScore2 := h.calculateScore(result2)
+
+			if resultScore2 > resultScore1 {
+				for i := range result2 {
+					if result2[i].Value == 14 {
+						result2[i].Value = 1
+					}
+				}
+
+				for i := range overCards2 {
+					if overCards2[i].Value == 14 {
+						overCards2[i].Value = 1
+					}
+				}
+
+				bestCombo = result2
+				overCards = overCards2
+				jokers = overJokers2
+
+			} else {
+				bestCombo = result1
+				overCards = overCards1
+				jokers = overJokers1
+			}
+
+			sort.Slice(bestCombo, func(i, j int) bool {
+				return bestCombo[i].Value < bestCombo[j].Value
+			})
+
 			if len(bestCombo) >= 3 {
 				result = append(result, bestCombo...)
 
@@ -713,6 +752,10 @@ func (h *Hand) findBestComboGap1(cards []app.Card, jokers []app.Card) ([]app.Car
 	overCards = h.handSliceDifference(cards, singleCards)
 	isUsed := false
 
+	sort.Slice(singleCards, func(i, j int) bool {
+		return singleCards[i].Value > singleCards[j].Value
+	})
+
 	var tempResult []app.Card
 
 	for i := 0; i < len(singleCards)-1; i++ {
@@ -721,14 +764,14 @@ func (h *Hand) findBestComboGap1(cards []app.Card, jokers []app.Card) ([]app.Car
 			if len(tempResult) > 0 {
 				gap = singleCards[j].Value - tempResult[len(tempResult)-1].Value
 			}
-			if gap == 1 {
+			if gap == -1 {
 				if len(tempResult) == 0 {
 					tempResult = append(tempResult, singleCards[i], singleCards[j])
 				} else {
 					tempResult = append(tempResult, singleCards[j])
 				}
 				break
-			} else if gap == 2 && !isUsed {
+			} else if gap == -2 && !isUsed {
 				if len(tempResult) == 0 {
 					tempResult = append(tempResult, singleCards[i], jokers[0], singleCards[j])
 					i++
@@ -759,6 +802,13 @@ func (h *Hand) findBestComboGap1(cards []app.Card, jokers []app.Card) ([]app.Car
 		result = append(result, jokers[0])
 		jokers = jokers[1:]
 	}
+
+	if len(tempResult) == 0 && len(singleCards) > 0 && len(jokers) > 2 {
+		result = append(result, singleCards[0], jokers[0], jokers[1])
+		overCards = singleCards[1:]
+		jokers = jokers[2:]
+	}
+
 	return overCards, result, jokers
 }
 

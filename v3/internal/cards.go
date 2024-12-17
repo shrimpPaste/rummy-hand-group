@@ -18,7 +18,7 @@ func (h *Hand) Run(r *gin.Engine) {
 }
 
 func (h *Hand) WebGet(c *gin.Context) {
-	isTest := true
+	isTest := false
 
 	var jokerValueRand int
 	if isTest {
@@ -45,19 +45,19 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	} else {
 		h.SetCards([]app.Card{
-			{Suit: app.D, Value: 13},
-			{Suit: app.B, Value: 13},
-			{Suit: app.JokerA, Value: 0},
-			{Suit: app.B, Value: 9},
-			{Suit: app.B, Value: 10},
-			{Suit: app.C, Value: 13},
-			{Suit: app.C, Value: 6},
-			{Suit: app.B, Value: 1},
-			{Suit: app.C, Value: 3},
+			{Suit: app.A, Value: 12},
+			{Suit: app.C, Value: 5},
+			{Suit: app.D, Value: 8},
+			{Suit: app.C, Value: 4},
+			{Suit: app.D, Value: 10},
+			{Suit: app.A, Value: 5},
+			{Suit: app.D, Value: 3},
 			{Suit: app.B, Value: 5},
-			{Suit: app.B, Value: 8},
+			{Suit: app.D, Value: 6},
 			{Suit: app.C, Value: 13},
-			{Suit: app.B, Value: 13},
+			{Suit: app.JokerB, Value: 0},
+			{Suit: app.D, Value: 7},
+			{Suit: app.JokerB, Value: 0},
 		})
 		jokerValueRand = 10
 	}
