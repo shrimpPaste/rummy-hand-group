@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/jinzhu/copier"
 	"rummy-logic-v3/pkg/app"
 	"sort"
 )
@@ -680,7 +681,9 @@ func (h *Hand) fillGapsWithJokers(suitCards map[string][]app.Card, jokers []app.
 			resultScore1 := h.calculateScore(result1)
 
 			// 处理A == 14的情况
-			cards2 := cards
+			cards2 := make([]app.Card, len(cards))
+			_ = copier.Copy(&cards2, cards)
+
 			for i := range cards2 {
 				if cards2[i].Value == 1 {
 					cards2[i].Value = 14
@@ -726,17 +729,17 @@ func (h *Hand) fillGapsWithJokers(suitCards map[string][]app.Card, jokers []app.
 	}
 
 	// 处理间隙小于等于3
-	//for suit, cards := range suitCards {
-	//	var overCards, bestCombo []app.Card
-	//	// 找间隙为1的
-	//	overCards, bestCombo, jokers = h.findBestComboGap2(cards, jokers)
-	//	if len(bestCombo) >= 3 {
-	//		result = append(result, bestCombo...)
-	//
-	//		// 更新当前花色的剩余牌
-	//		suitCards[suit] = overCards
-	//	}
-	//}
+	for suit, cards := range suitCards {
+		var overCards, bestCombo []app.Card
+		// 找间隙为1的
+		overCards, bestCombo, jokers = h.findBestComboGap2(cards, jokers)
+		if len(bestCombo) >= 3 {
+			result = append(result, bestCombo...)
+
+			// 更新当前花色的剩余牌
+			suitCards[suit] = overCards
+		}
+	}
 
 	return result, jokers
 }
@@ -803,12 +806,6 @@ func (h *Hand) findBestComboGap1(cards []app.Card, jokers []app.Card) ([]app.Car
 		jokers = jokers[1:]
 	}
 
-	if len(tempResult) == 0 && len(singleCards) > 0 && len(jokers) > 2 {
-		result = append(result, singleCards[0], jokers[0], jokers[1])
-		overCards = singleCards[1:]
-		jokers = jokers[2:]
-	}
-
 	return overCards, result, jokers
 }
 
@@ -821,32 +818,43 @@ func (h *Hand) findBestComboGap2(cards []app.Card, jokers []app.Card) ([]app.Car
 
 	singleCards := removeDuplicates(cards)
 	overCards = h.handSliceDifference(cards, singleCards)
+
+	sort.Slice(singleCards, func(i, j int) bool {
+		return singleCards[i].Value > singleCards[j].Value
+	})
 	isUsed := false
 
 	var tempResult []app.Card
 
-	for i := 0; i < len(singleCards)-1; i++ {
+	for i := 0; i <= len(singleCards)-1; i++ {
+		if i == len(singleCards)-1 && len(tempResult) > 0 && singleCards[i].Value-tempResult[len(tempResult)-1].Value == 1 {
+			tempResult = append(tempResult, singleCards[i])
+		}
+		if i == len(singleCards)-1 && len(tempResult) == 0 {
+			overCards = append(overCards, singleCards[i])
+		}
 		for j := i + 1; j < len(singleCards); j++ {
 			gap := singleCards[j].Value - singleCards[i].Value
 			if len(tempResult) > 0 {
 				gap = singleCards[j].Value - tempResult[len(tempResult)-1].Value
 			}
-			if gap == 1 {
+
+			if gap == -1 {
 				if len(tempResult) == 0 {
 					tempResult = append(tempResult, singleCards[i], singleCards[j])
 				} else {
 					tempResult = append(tempResult, singleCards[j])
 				}
 				break
-			} else if gap == 2 && !isUsed {
+			} else if gap == -3 && len(jokers) > 1 && !isUsed {
 				if len(tempResult) == 0 {
-					tempResult = append(tempResult, singleCards[i], jokers[0], singleCards[j])
-					i++
+					tempResult = append(tempResult, singleCards[i], jokers[0], jokers[1], singleCards[j])
+					i++ // 跳过当前处理的卡
 				} else {
-					tempResult = append(tempResult, jokers[0], singleCards[j])
+					tempResult = append(tempResult, jokers[0], jokers[1], singleCards[j])
 					i++
 				}
-				jokers = jokers[1:]
+				jokers = jokers[2:]
 				isUsed = true
 			} else {
 				if len(tempResult) != 0 {
@@ -868,5 +876,6 @@ func (h *Hand) findBestComboGap2(cards []app.Card, jokers []app.Card) ([]app.Car
 		result = append(result, jokers[0])
 		jokers = jokers[1:]
 	}
+
 	return overCards, result, jokers
 }

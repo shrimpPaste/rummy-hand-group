@@ -45,21 +45,21 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	} else {
 		h.SetCards([]app.Card{
-			{Suit: app.A, Value: 12},
-			{Suit: app.C, Value: 5},
-			{Suit: app.D, Value: 8},
-			{Suit: app.C, Value: 4},
-			{Suit: app.D, Value: 10},
-			{Suit: app.A, Value: 5},
-			{Suit: app.D, Value: 3},
-			{Suit: app.B, Value: 5},
-			{Suit: app.D, Value: 6},
+			{Suit: app.C, Value: 11},
 			{Suit: app.C, Value: 13},
-			{Suit: app.JokerB, Value: 0},
-			{Suit: app.D, Value: 7},
+			{Suit: app.B, Value: 4},
+			{Suit: app.B, Value: 5},
+			{Suit: app.D, Value: 1},
+			{Suit: app.D, Value: 9},
+			{Suit: app.D, Value: 8},
+			{Suit: app.D, Value: 12},
+			{Suit: app.D, Value: 2},
+			{Suit: app.D, Value: 11},
+			{Suit: app.JokerA, Value: 0},
+			{Suit: app.JokerA, Value: 0},
 			{Suit: app.JokerB, Value: 0},
 		})
-		jokerValueRand = 10
+		jokerValueRand = 12
 	}
 
 	jokerRand := app.Card{Suit: app.D, Value: jokerValueRand}
@@ -109,6 +109,12 @@ func (h *Hand) WebGet(c *gin.Context) {
 
 	var setWithJoker, pureWithCards, setCards2 []app.Card
 
+	if len(pureCards) < 6 {
+		// 顺子不够就要先找顺子，满足两个顺子才行
+		overCards = append(overCards, setCards...)
+		setCards = []app.Card{}
+	}
+
 	// TODO::1. 如果有一个joker，就要去找间隙 < 3
 	overCards, pureWithCards, jokers = h.findGapsByJoker(overCards, jokers)
 	// TODO::2. 如果有2个joker，就要去找间隙 == 3 如果还是没有 就去两个joker + 一个点数最大的牌。
@@ -126,6 +132,9 @@ func (h *Hand) WebGet(c *gin.Context) {
 		overCards, setWithJoker, jokers = h.findSetWithJoker2(overCards, jokers)
 	} else {
 		overCards = append(overCards, setCards...)
+		overCards = append(overCards, pureCards...)
+
+		pureCards, overCards = h.GetPure(overCards)
 		setCards = []app.Card{}
 	}
 
@@ -141,6 +150,99 @@ func (h *Hand) WebGet(c *gin.Context) {
 		"sysJoker":      getCardsResult([]app.Card{h.wild}),
 	})
 	return
+}
+
+func (h *Hand) ToTest() map[string][]int {
+	var jokerValueRand int
+	desk := InitializeDeck()
+	ShuffleDeck(desk)
+	headCard := DealCards(&desk, 13)
+
+	suitCards := make(map[string][]app.Card, 4)
+	h.groupCards(suitCards, headCard)
+
+	var headCardRes []app.Card
+	for _, cards := range suitCards {
+		headCardRes = append(headCardRes, cards...)
+	}
+
+	h.SetCards(headCardRes)
+
+	jokerValueRand = rand.Intn(13) + 1
+
+	jokerRand := app.Card{Suit: app.D, Value: jokerValueRand}
+
+	suitRand := rand.Intn(4)
+	if suitRand == 0 {
+		jokerRand.Suit = app.A
+	} else if suitRand == 1 {
+		jokerRand.Suit = app.C
+	} else if suitRand == 2 {
+		jokerRand.Suit = app.B
+	}
+
+	h.SetWildJoker(jokerRand)
+
+	overCards, setCards, _ := h.findSet(h.cards)
+
+	pureCards, overCards := h.GetPure(overCards)
+
+	if !h.judgeIsHave1Seq(pureCards) {
+
+	} else {
+		return map[string][]int{
+			"myCards":       getCardsResult(h.cards),
+			"calcCards":     getCardsResult([]app.Card{}),
+			"pure":          getCardsResult([]app.Card{}),
+			"pureWithJoker": getCardsResult([]app.Card{}),
+			"set":           getCardsResult([]app.Card{}),
+			"setWithJoker":  getCardsResult([]app.Card{}),
+			"invalid":       getCardsResult(h.cards),
+			"joker":         getCardsResult([]app.Card{}),
+			"sysJoker":      getCardsResult([]app.Card{h.wild}),
+		}
+	}
+
+	jokers, overCards := h.findJoker(overCards)
+
+	var setWithJoker, pureWithCards, setCards2 []app.Card
+
+	if len(pureCards) < 6 {
+		// 顺子不够就要先找顺子，满足两个顺子才行
+		overCards = append(overCards, setCards...)
+		setCards = []app.Card{}
+	}
+
+	overCards, pureWithCards, jokers = h.findGapsByJoker(overCards, jokers)
+
+	if len(pureCards) >= 6 || (len(pureCards) >= 3 && len(pureWithCards) >= 3) {
+		overCards, setCards2, _ = h.findSet(overCards)
+
+		if len(setCards2) > 0 {
+			setCards2 = h.handSliceDifference(setCards2, setCards)
+			setCards = append(setCards, setCards2...)
+		}
+
+		overCards, setWithJoker, jokers = h.findSetWithJoker2(overCards, jokers)
+	} else {
+		overCards = append(overCards, setCards...)
+		overCards = append(overCards, pureCards...)
+
+		pureCards, overCards = h.GetPure(overCards)
+		setCards = []app.Card{}
+	}
+
+	return map[string][]int{
+		"myCards":       getCardsResult(h.cards),
+		"calcCards":     getCardsResult([]app.Card{}),
+		"pure":          getCardsResult(pureCards),
+		"pureWithJoker": getCardsResult(pureWithCards),
+		"set":           getCardsResult(setCards),
+		"setWithJoker":  getCardsResult(setWithJoker),
+		"invalid":       getCardsResult(overCards),
+		"joker":         getCardsResult(jokers),
+		"sysJoker":      getCardsResult([]app.Card{h.wild}),
+	}
 }
 
 func NewHand() *Hand {

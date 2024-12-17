@@ -380,33 +380,68 @@ func removeDuplicates(cards []Card) []Card {
 	return result
 }
 
-func findGap2(cards []Card, jokers []Card) ([]Card, []Card, []Card) {
+func findGap3(cards []Card, jokers []Card) ([]Card, []Card, []Card) {
 	var result, overCards []Card
 
-	isUsed := false
-	// 间隙为1的
-	for i := 0; i < len(cards)-1; i++ {
-		for j := i + 1; j < len(cards); j++ {
-			gap := cards[j].Value - cards[i].Value
-			if gap == 0 {
-				overCards = append(overCards, cards[i])
-				i++
-				continue
-			}
-			if gap == 1 {
-				result = append(result, cards[i], cards[j])
-				i++
-				continue
-			}
-			if gap == 3 && !isUsed {
-				result = append(result, jokers[0], jokers[1])
-				result = append(result, cards[j])
+	singleCards := removeDuplicates(cards)
+	overCards = handSliceDifference(cards, singleCards)
 
+	sort.Slice(singleCards, func(i, j int) bool {
+		return singleCards[i].Value > singleCards[j].Value
+	})
+	isUsed := false
+
+	var tempResult []Card
+
+	for i := 0; i <= len(singleCards)-1; i++ {
+		if i == len(singleCards)-1 && len(tempResult) > 0 && singleCards[i].Value-tempResult[len(tempResult)-1].Value == 1 {
+			tempResult = append(tempResult, singleCards[i])
+		}
+		if i == len(singleCards)-1 && len(tempResult) == 0 {
+			overCards = append(overCards, singleCards[i])
+		}
+		for j := i + 1; j < len(singleCards); j++ {
+			gap := singleCards[j].Value - singleCards[i].Value
+			if len(tempResult) > 0 {
+				gap = singleCards[j].Value - tempResult[len(tempResult)-1].Value
+			}
+
+			if gap == -1 {
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], singleCards[j])
+				} else {
+					tempResult = append(tempResult, singleCards[j])
+				}
+				break
+			} else if gap == -3 && len(jokers) > 1 && !isUsed {
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], jokers[0], jokers[1], singleCards[j])
+					i++ // 跳过当前处理的卡
+				} else {
+					tempResult = append(tempResult, jokers[0], jokers[1], singleCards[j])
+					i++
+				}
 				jokers = jokers[2:]
-				i = j
 				isUsed = true
+			} else {
+				if len(tempResult) != 0 {
+					overCards = append(overCards, singleCards[j])
+				} else {
+					overCards = append(overCards, singleCards[i])
+				}
+				break
 			}
 		}
+	}
+
+	if len(tempResult) >= 3 {
+		result = append(result, tempResult...)
+	}
+
+	if len(tempResult) == 2 && len(jokers) > 0 {
+		result = append(result, tempResult...)
+		result = append(result, jokers[0])
+		jokers = jokers[1:]
 	}
 
 	return overCards, result, jokers
@@ -451,13 +486,13 @@ func main() {
 	//	{Suit: "A", Value: 10},
 	//}
 
-	cards1 := []Card{
-		{Suit: "A", Value: 4},
-		{Suit: "A", Value: 4},
-		{Suit: "A", Value: 8},
-		{Suit: "A", Value: 8},
-		{Suit: "A", Value: 9},
-	}
+	//cards1 := []Card{
+	//	{Suit: "A", Value: 4},
+	//	{Suit: "A", Value: 4},
+	//	{Suit: "A", Value: 8},
+	//	{Suit: "A", Value: 8},
+	//	{Suit: "A", Value: 9},
+	//}
 
 	//cards1 := []Card{
 	//	{Suit: "A", Value: 13},
@@ -467,53 +502,70 @@ func main() {
 	//	//{Suit: "A", Value: 12},
 	//}
 
-	jokers := []Card{
-		{Suit: "D", Value: 2},
-		{Suit: "D", Value: 2},
-		{Suit: "D", Value: 2},
-	}
+	//cards1 := []Card{
+	//	{Suit: "A", Value: 7},
+	//	{Suit: "A", Value: 8},
+	//	{Suit: "A", Value: 10},
+	//	{Suit: "A", Value: 13},
+	//}
 
-	var result, overCards, overJokers []Card
-
-	overCards1, result1, overJokers1 := findGap(cards1, jokers)
-
-	resultScore := calculateScore(result1)
-
-	// 处理A == 14的情况
-	cards2 := cards1
-	for i := range cards2 {
-		if cards2[i].Value == 1 {
-			cards2[i].Value = 14
-		}
-	}
-	overCards2, result2, overJokers2 := findGap(cards2, jokers)
-	resultScore2 := calculateScore(result2)
-
-	if resultScore2 > resultScore {
-		for i := range result2 {
-			if result2[i].Value == 14 {
-				result2[i].Value = 1
-			}
-		}
-
-		for i := range overCards2 {
-			if overCards2[i].Value == 14 {
-				overCards2[i].Value = 1
-			}
-		}
-
-		result = result2
-		overCards = overCards2
-		overJokers = overJokers2
-
-	} else {
-		result = result1
-		overCards = overCards1
-		overJokers = overJokers1
-	}
-	fmt.Println("overCards", overCards, "result", result, "jokers", overJokers)
-
+	//cards1 := []Card{
+	//	{Suit: "A", Value: 1},
+	//	{Suit: "A", Value: 2},
+	//}
 	//
+	//jokers := []Card{
+	//	{Suit: "D", Value: 5},
+	//}
 	//
-	//fmt.Println(overCards, result, jokers)
+	//var result, overCards, overJokers []Card
+	//
+	//overCards1, result1, overJokers1 := findGap(cards1, jokers)
+	//
+	//resultScore := calculateScore(result1)
+	//
+	//// 处理A == 14的情况
+	//cards2 := cards1
+	//for i := range cards2 {
+	//	if cards2[i].Value == 1 {
+	//		cards2[i].Value = 14
+	//	}
+	//}
+	//overCards2, result2, overJokers2 := findGap(cards2, jokers)
+	//resultScore2 := calculateScore(result2)
+	//
+	//if resultScore2 > resultScore {
+	//	for i := range result2 {
+	//		if result2[i].Value == 14 {
+	//			result2[i].Value = 1
+	//		}
+	//	}
+	//
+	//	for i := range overCards2 {
+	//		if overCards2[i].Value == 14 {
+	//			overCards2[i].Value = 1
+	//		}
+	//	}
+	//
+	//	result = result2
+	//	overCards = overCards2
+	//	overJokers = overJokers2
+	//
+	//} else {
+	//	result = result1
+	//	overCards = overCards1
+	//	overJokers = overJokers1
+	//}
+	//fmt.Println("overCards", overCards, "result", result, "jokers", overJokers)
+
+	cards3 := []Card{
+		{Suit: "A", Value: 7},
+		{Suit: "A", Value: 10},
+	}
+	jokers2 := []Card{
+		{Suit: "D", Value: 5},
+		{Suit: "D", Value: 5},
+	}
+	overCards3, result3, overJokers3 := findGap3(cards3, jokers2)
+	fmt.Println("overCards3", overCards3, "result3", result3, "jokers3", overJokers3)
 }

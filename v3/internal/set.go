@@ -117,6 +117,9 @@ func (h *Hand) findSetWithJoker2(cards, jokers []app.Card) ([]app.Card, []app.Ca
 
 	// 消耗1张Joker牌
 	for i, r := range result {
+		if len(jokers) < 1 {
+			break
+		}
 		if len(r) == 2 && len(jokers) >= 1 {
 			setCards = append(setCards, r...)
 			setCards = append(setCards, jokers[0])
@@ -128,6 +131,9 @@ func (h *Hand) findSetWithJoker2(cards, jokers []app.Card) ([]app.Card, []app.Ca
 
 	// 消耗2张Joker牌
 	for i, r := range result {
+		if len(jokers) < 2 {
+			break
+		}
 		if len(r) == 1 && len(jokers) >= 2 {
 			setCards = append(setCards, r...)
 			setCards = append(setCards, jokers[0], jokers[1])
