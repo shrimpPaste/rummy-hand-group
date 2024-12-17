@@ -228,30 +228,33 @@ func findGap(cards []Card, jokers []Card) ([]Card, []Card, []Card) {
 	var tempResult []Card
 
 	for i := 0; i < len(singleCards)-1; i++ {
-		if i == len(singleCards) && singleCards[i].Value-tempResult[i-1].Value == 1 {
-			tempResult = append(tempResult, singleCards[i-1])
-			break
-		}
 		for j := i + 1; j < len(singleCards); j++ {
 			gap := singleCards[j].Value - singleCards[i].Value
+			if len(tempResult) > 0 {
+				gap = singleCards[j].Value - tempResult[len(tempResult)-1].Value
+			}
 			if gap == 1 {
-				tempResult = append(tempResult, singleCards[i], singleCards[i+1])
-				i++
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], singleCards[j])
+				} else {
+					tempResult = append(tempResult, singleCards[j])
+				}
 				break
 			} else if gap == 2 && !isUsed {
 				if len(tempResult) == 0 {
 					tempResult = append(tempResult, singleCards[i], jokers[0], singleCards[j])
 					i++
-					break
 				} else {
-					tempResult = append(tempResult, jokers[0], singleCards[i])
+					tempResult = append(tempResult, jokers[0], singleCards[j])
+					i++
 				}
 				jokers = jokers[1:]
 				isUsed = true
 			} else {
-				overCards = append(overCards, singleCards[i])
-				if j == len(cards)-1 {
+				if len(tempResult) != 0 {
 					overCards = append(overCards, singleCards[j])
+				} else {
+					overCards = append(overCards, singleCards[i])
 				}
 				break
 			}
@@ -336,13 +339,13 @@ func main() {
 	//	{Suit: "A", Value: 4},
 	//}
 
-	cards1 := []Card{
-		{Suit: "A", Value: 1},
-		{Suit: "A", Value: 1},
-		{Suit: "A", Value: 7},
-		{Suit: "A", Value: 8},
-		{Suit: "A", Value: 10},
-	}
+	//cards1 := []Card{
+	//	{Suit: "A", Value: 1},
+	//	{Suit: "A", Value: 1},
+	//	{Suit: "A", Value: 7},
+	//	{Suit: "A", Value: 8},
+	//	{Suit: "A", Value: 10},
+	//}
 
 	//cards1 := []Card{
 	//	{Suit: "A", Value: 4},
@@ -352,8 +355,16 @@ func main() {
 	//	{Suit: "A", Value: 9},
 	//}
 
+	cards1 := []Card{
+		{Suit: "A", Value: 1},
+		{Suit: "A", Value: 3},
+		{Suit: "A", Value: 7},
+		{Suit: "A", Value: 10},
+		{Suit: "A", Value: 11},
+	}
+
 	jokers := []Card{
-		{Suit: "D", Value: 5},
+		{Suit: "D", Value: 2},
 	}
 
 	var result, overCards []Card

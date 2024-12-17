@@ -127,3 +127,19 @@ func getCardsResult(cards []app.Card) []int {
 	}
 	return myCards
 }
+
+func removeDuplicates(cards []app.Card) []app.Card {
+	// 使用 map 来记录已经出现过的 Card
+	seen := make(map[app.Card]bool)
+	var result []app.Card
+
+	for _, card := range cards {
+		// 如果 map 中没有这个 Card，则添加到结果中，并标记为已见
+		if _, ok := seen[card]; !ok {
+			seen[card] = true
+			result = append(result, card)
+		}
+	}
+
+	return result
+}

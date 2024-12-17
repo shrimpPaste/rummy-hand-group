@@ -675,7 +675,7 @@ func (h *Hand) fillGapsWithJokers(suitCards map[string][]app.Card, jokers []app.
 	for suit, cards := range suitCards {
 		var overCards, bestCombo []app.Card
 		if len(cards) >= 2 {
-			// 找间隙为1的
+			// 找间隙为1的 TODO:: 找不到 Q K A的
 			overCards, bestCombo, jokers = h.findBestComboGap1(cards, jokers)
 			if len(bestCombo) >= 3 {
 				result = append(result, bestCombo...)
@@ -687,17 +687,17 @@ func (h *Hand) fillGapsWithJokers(suitCards map[string][]app.Card, jokers []app.
 	}
 
 	// 处理间隙小于等于3
-	for suit, cards := range suitCards {
-		var overCards, bestCombo []app.Card
-		// 找间隙为1的
-		overCards, bestCombo, jokers = h.findBestComboGap2(cards, jokers)
-		if len(bestCombo) >= 3 {
-			result = append(result, bestCombo...)
-
-			// 更新当前花色的剩余牌
-			suitCards[suit] = overCards
-		}
-	}
+	//for suit, cards := range suitCards {
+	//	var overCards, bestCombo []app.Card
+	//	// 找间隙为1的
+	//	overCards, bestCombo, jokers = h.findBestComboGap2(cards, jokers)
+	//	if len(bestCombo) >= 3 {
+	//		result = append(result, bestCombo...)
+	//
+	//		// 更新当前花色的剩余牌
+	//		suitCards[suit] = overCards
+	//	}
+	//}
 
 	return result, jokers
 }
@@ -708,69 +708,56 @@ func (h *Hand) findBestComboGap1(cards []app.Card, jokers []app.Card) ([]app.Car
 	}
 
 	var result, overCards []app.Card
+
+	singleCards := removeDuplicates(cards)
+	overCards = h.handSliceDifference(cards, singleCards)
 	isUsed := false
-	// 间隙为1的
-	for i := 0; i < len(cards)-1; i++ {
-		for j := i + 1; j < len(cards); j++ {
-			if i > len(cards)-1 {
-				break
+
+	var tempResult []app.Card
+
+	for i := 0; i < len(singleCards)-1; i++ {
+		for j := i + 1; j < len(singleCards); j++ {
+			gap := singleCards[j].Value - singleCards[i].Value
+			if len(tempResult) > 0 {
+				gap = singleCards[j].Value - tempResult[len(tempResult)-1].Value
 			}
-			gap := cards[j].Value - cards[i].Value
-			if gap == 0 {
-				overCards = append(overCards, cards[i])
-				if len(result) > 0 {
-					result = result[:len(result)-1]
-				}
-
-				continue
-			} else if gap == 1 {
-				if len(result) == 0 {
-					result = append(result, cards[i], cards[j])
+			if gap == 1 {
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], singleCards[j])
 				} else {
-					result = append(result, cards[j])
+					tempResult = append(tempResult, singleCards[j])
 				}
-				i++
-				continue
+				break
 			} else if gap == 2 && !isUsed {
-				if len(result) >= 2 && result[len(result)-1].Value == cards[i].Value {
-					result = append(result, jokers[0])
-					result = append(result, cards[j])
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], jokers[0], singleCards[j])
+					i++
 				} else {
-					result = append(result, cards[i])
-					result = append(result, jokers[0])
-					result = append(result, cards[j])
+					tempResult = append(tempResult, jokers[0], singleCards[j])
+					i++
 				}
-
 				jokers = jokers[1:]
-				i = j
 				isUsed = true
 			} else {
-				if len(result) == 2 && len(jokers) >= 1 {
-					result = append(result, jokers[0])
-					jokers = jokers[1:]
-					overCards = append(overCards, cards[i+1:]...)
-					i = len(cards)
+				if len(tempResult) != 0 {
+					overCards = append(overCards, singleCards[j])
 				} else {
-					overCards = append(overCards, cards[i])
-					i++
-					break
+					overCards = append(overCards, singleCards[i])
 				}
+				break
 			}
 		}
+
 	}
 
-	if len(result) == 2 && len(jokers) >= 1 {
+	if len(tempResult) >= 3 {
+		result = append(result, tempResult...)
+	}
+
+	if len(tempResult) == 2 && len(jokers) > 0 {
+		result = append(result, tempResult...)
 		result = append(result, jokers[0])
 		jokers = jokers[1:]
-	}
-
-	if len(overCards) >= 2 && len(jokers) >= 1 {
-		overCards2, result2, jokers2 := h.findBestComboGap1(overCards, jokers)
-		if len(result2) >= 3 {
-			result = append(result, result2...)
-			jokers = jokers2
-			overCards = overCards2
-		}
 	}
 	return overCards, result, jokers
 }
@@ -781,45 +768,55 @@ func (h *Hand) findBestComboGap2(cards []app.Card, jokers []app.Card) ([]app.Car
 	}
 
 	var result, overCards []app.Card
-	isUsed := false
-	// 间隙为1的
-	for i := 0; i < len(cards)-1; i++ {
-		for j := i + 1; j < len(cards); j++ {
-			gap := cards[j].Value - cards[i].Value
-			if gap == 0 {
-				overCards = append(overCards, cards[i])
-				i++
-				continue
-			} else if gap == 1 {
-				result = append(result, cards[i], cards[j])
-				i++
-				continue
-			} else if gap == 3 && !isUsed {
-				if len(result) == 0 {
-					result = append(result, cards[i])
-				}
-				result = append(result, jokers[0], jokers[1])
-				result = append(result, cards[j])
 
-				jokers = jokers[2:]
-				i = j
+	singleCards := removeDuplicates(cards)
+	overCards = h.handSliceDifference(cards, singleCards)
+	isUsed := false
+
+	var tempResult []app.Card
+
+	for i := 0; i < len(singleCards)-1; i++ {
+		for j := i + 1; j < len(singleCards); j++ {
+			gap := singleCards[j].Value - singleCards[i].Value
+			if len(tempResult) > 0 {
+				gap = singleCards[j].Value - tempResult[len(tempResult)-1].Value
+			}
+			if gap == 1 {
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], singleCards[j])
+				} else {
+					tempResult = append(tempResult, singleCards[j])
+				}
+				break
+			} else if gap == 2 && !isUsed {
+				if len(tempResult) == 0 {
+					tempResult = append(tempResult, singleCards[i], jokers[0], singleCards[j])
+					i++
+				} else {
+					tempResult = append(tempResult, jokers[0], singleCards[j])
+					i++
+				}
+				jokers = jokers[1:]
 				isUsed = true
 			} else {
-				overCards = append(overCards, cards[i])
-				i++
+				if len(tempResult) != 0 {
+					overCards = append(overCards, singleCards[j])
+				} else {
+					overCards = append(overCards, singleCards[i])
+				}
 				break
 			}
 		}
 	}
 
-	if len(overCards) >= 2 && len(jokers) >= 2 {
-		overCards2, result2, jokers2 := h.findBestComboGap2(overCards, jokers)
-		if len(result2) >= 3 {
-			result = append(result, result2...)
-			jokers = jokers2
-			overCards = overCards2
-		}
+	if len(tempResult) >= 3 {
+		result = append(result, tempResult...)
 	}
 
+	if len(tempResult) == 2 && len(jokers) > 0 {
+		result = append(result, tempResult...)
+		result = append(result, jokers[0])
+		jokers = jokers[1:]
+	}
 	return overCards, result, jokers
 }
