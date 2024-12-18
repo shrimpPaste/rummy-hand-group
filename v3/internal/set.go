@@ -59,37 +59,6 @@ func (h *Hand) findSetFromCards(result, cards []app.Card) []app.Card {
 	return h.findSetFromCards(result, cards[1:])
 }
 
-func (h *Hand) findSetWithJoker(cards, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
-	var valid []app.Card
-
-	if len(jokers) == 0 {
-		return cards, valid, jokers
-	}
-
-	for _, card := range cards {
-		if len(valid) == 0 {
-			continue
-		}
-
-		for _, v := range valid {
-			if card.Value == v.Value && card.Suit != v.Suit {
-				valid = append(valid, card)
-			}
-		}
-	}
-
-	if len(valid) == 2 && len(jokers) >= 1 {
-		// 消耗一张joker牌
-
-		jokers = jokers[1:]
-		valid = append(valid, jokers[0])
-		cards = h.handSliceDifference(cards, valid)
-
-		return cards, valid, jokers
-	}
-	return cards, valid, jokers
-}
-
 func (h *Hand) findSetWithJoker2(cards, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
 	result := make(map[int][]app.Card)
 	var overCards []app.Card

@@ -482,25 +482,6 @@ import (
 //	return invalid
 //}
 
-// 通过map 返回int值最高的
-func (h *Hand) getMostScoreCards(cardsMap map[int][]app.Card) ([]app.Card, int) {
-	// 内部函数，用于计算最大分数
-	calcMostScore := func(cardsMap map[int][]app.Card) int {
-		maxScore := 0
-		for k := range cardsMap {
-			if k > maxScore {
-				maxScore = k
-			}
-		}
-		return maxScore
-	}
-
-	// 调用内部函数计算最大分数
-	mostScore := calcMostScore(cardsMap)
-	// 返回结果
-	return cardsMap[mostScore], mostScore
-}
-
 func (h *Hand) findAndRemoveMaxGapScore(gapScore map[int][]app.Card) ([]app.Card, map[int][]app.Card) {
 	var maxKey int
 	var maxCards []app.Card
@@ -582,69 +563,6 @@ func (h *Hand) findGapFromCards(result, cards []app.Card, usedGap2 bool) []app.C
 
 	// 递归调用，从下一张牌开始检查
 	return h.findGapFromCards(result, cards[1:], usedGap2)
-}
-
-func (h *Hand) findGapMostScoreCards(overCards, jokers []app.Card) ([]app.Card, []app.Card, []app.Card) {
-	// TODO:: 当癞子变多，找不到带joker的顺子则一个都找不到
-	// TODO:: 这里只能找到间隙为1的，找间隙牌应该再实现一个不区分癞子的，把他都找出来，假设癞子是红桃6，同时你有两个红桃6，一个红桃8
-	// TODO:: 那么你应该能够得到 68 6这样子的一个带joker的顺子 进入这种情况是要不满足两个顺子的情况。
-	suitCards := make(map[string][]app.Card, 4)
-	h.groupCards(suitCards, overCards)
-	gapScore := map[int][]app.Card{}
-
-	var result []app.Card
-
-	for suit, cards := range suitCards {
-		if len(cards) < 2 {
-			continue
-		}
-		sort.Slice(cards, func(i, j int) bool {
-			return cards[i].Value < cards[j].Value
-		})
-
-		gapScore = h.handleGapsCards(cards, gapScore)
-		for _, g := range gapScore {
-			suitCards[suit] = h.handSliceDifference(suitCards[suit], g)
-		}
-	}
-
-	for _, joker := range jokers {
-		bestCards, g := h.findAndRemoveMaxGapScore(gapScore)
-		if len(bestCards) > 0 {
-			bestCards = append(bestCards, joker)
-
-			result = append(result, bestCards...)
-
-			overCards = h.handSliceDifference(overCards, bestCards)
-
-			jokers = h.handSliceDifference(jokers, bestCards)
-			//jokers = h.removeByIndex(jokers, i)
-			gapScore = g
-		}
-	}
-
-	//for _, cards := range gapScore {
-	//	overCards = append(overCards, cards...)
-	//}
-
-	return overCards, result, jokers
-}
-
-func (h *Hand) handleGapsCards(cards []app.Card, gapScore map[int][]app.Card) (score map[int][]app.Card) {
-	gapsCards := h.findGap(cards)
-
-	if len(gapsCards) >= 2 {
-		gapScore[h.calculateScore(gapsCards)] = gapsCards
-	}
-
-	if len(gapsCards) < 2 {
-		return gapScore
-	}
-
-	overCards := h.handSliceDifference(cards, gapsCards)
-	gapScore = h.handleGapsCards(overCards, gapScore)
-
-	return gapScore
 }
 
 func (h *Hand) findGapsByJoker(cards []app.Card, jokers []app.Card) (overCards []app.Card, pureWithJoker []app.Card, remainingJokers []app.Card) {

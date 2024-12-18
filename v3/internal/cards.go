@@ -18,7 +18,7 @@ func (h *Hand) Run(r *gin.Engine) {
 }
 
 func (h *Hand) WebGet(c *gin.Context) {
-	isTest := false
+	isTest := true
 
 	var jokerValueRand int
 	if isTest {
