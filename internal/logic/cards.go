@@ -1,4 +1,4 @@
-package internal
+package logic
 
 import (
 	"fmt"
@@ -91,15 +91,15 @@ func (h *Hand) WebGet(c *gin.Context) {
 		// TODO:: 一开始找的时候，不要抽离Joker，在找完纯顺子再去找Joker。
 	} else {
 		c.JSON(200, gin.H{
-			"myCards":       getCardsResult(h.cards),
-			"calcCards":     getCardsResult([]app.Card{}),
-			"pure":          getCardsResult([]app.Card{}),
-			"pureWithJoker": getCardsResult([]app.Card{}),
-			"set":           getCardsResult([]app.Card{}),
-			"setWithJoker":  getCardsResult([]app.Card{}),
-			"invalid":       getCardsResult(h.cards),
-			"joker":         getCardsResult([]app.Card{}),
-			"sysJoker":      getCardsResult([]app.Card{h.wild}),
+			"myCards":       GetCardsResult(h.cards),
+			"calcCards":     GetCardsResult([]app.Card{}),
+			"pure":          GetCardsResult([]app.Card{}),
+			"pureWithJoker": GetCardsResult([]app.Card{}),
+			"set":           GetCardsResult([]app.Card{}),
+			"setWithJoker":  GetCardsResult([]app.Card{}),
+			"invalid":       GetCardsResult(h.cards),
+			"joker":         GetCardsResult([]app.Card{}),
+			"sysJoker":      GetCardsResult([]app.Card{h.wild}),
 		})
 		return
 	}
@@ -141,15 +141,15 @@ func (h *Hand) WebGet(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"myCards":       getCardsResult(h.cards),
-		"calcCards":     getCardsResult([]app.Card{}),
-		"pure":          getCardsResult(pureCards),
-		"pureWithJoker": getCardsResult(pureWithCards),
-		"set":           getCardsResult(setCards),
-		"setWithJoker":  getCardsResult(setWithJoker),
-		"invalid":       getCardsResult(overCards),
-		"joker":         getCardsResult(jokers),
-		"sysJoker":      getCardsResult([]app.Card{h.wild}),
+		"myCards":       GetCardsResult(h.cards),
+		"calcCards":     GetCardsResult([]app.Card{}),
+		"pure":          GetCardsResult(pureCards),
+		"pureWithJoker": GetCardsResult(pureWithCards),
+		"set":           GetCardsResult(setCards),
+		"setWithJoker":  GetCardsResult(setWithJoker),
+		"invalid":       GetCardsResult(overCards),
+		"joker":         GetCardsResult(jokers),
+		"sysJoker":      GetCardsResult([]app.Card{h.wild}),
 	})
 	return
 }
@@ -171,7 +171,7 @@ func (h *Hand) WebGet2(c *gin.Context) {
 
 		for _, card := range Cards {
 			if len(card) > 0 {
-				response = append(response, getCardsResult(card))
+				response = append(response, GetCardsResult(card))
 			}
 		}
 		return response
@@ -380,15 +380,15 @@ func (h *Hand) ToTest() map[string][]int {
 
 	} else {
 		return map[string][]int{
-			"myCards":       getCardsResult(h.cards),
-			"calcCards":     getCardsResult([]app.Card{}),
-			"pure":          getCardsResult([]app.Card{}),
-			"pureWithJoker": getCardsResult([]app.Card{}),
-			"set":           getCardsResult([]app.Card{}),
-			"setWithJoker":  getCardsResult([]app.Card{}),
-			"invalid":       getCardsResult(h.cards),
-			"joker":         getCardsResult([]app.Card{}),
-			"sysJoker":      getCardsResult([]app.Card{h.wild}),
+			"myCards":       GetCardsResult(h.cards),
+			"calcCards":     GetCardsResult([]app.Card{}),
+			"pure":          GetCardsResult([]app.Card{}),
+			"pureWithJoker": GetCardsResult([]app.Card{}),
+			"set":           GetCardsResult([]app.Card{}),
+			"setWithJoker":  GetCardsResult([]app.Card{}),
+			"invalid":       GetCardsResult(h.cards),
+			"joker":         GetCardsResult([]app.Card{}),
+			"sysJoker":      GetCardsResult([]app.Card{h.wild}),
 		}
 	}
 
@@ -422,15 +422,15 @@ func (h *Hand) ToTest() map[string][]int {
 	}
 
 	return map[string][]int{
-		"myCards":       getCardsResult(h.cards),
-		"calcCards":     getCardsResult([]app.Card{}),
-		"pure":          getCardsResult(pureCards),
-		"pureWithJoker": getCardsResult(pureWithCards),
-		"set":           getCardsResult(setCards),
-		"setWithJoker":  getCardsResult(setWithJoker),
-		"invalid":       getCardsResult(overCards),
-		"joker":         getCardsResult(jokers),
-		"sysJoker":      getCardsResult([]app.Card{h.wild}),
+		"myCards":       GetCardsResult(h.cards),
+		"calcCards":     GetCardsResult([]app.Card{}),
+		"pure":          GetCardsResult(pureCards),
+		"pureWithJoker": GetCardsResult(pureWithCards),
+		"set":           GetCardsResult(setCards),
+		"setWithJoker":  GetCardsResult(setWithJoker),
+		"invalid":       GetCardsResult(overCards),
+		"joker":         GetCardsResult(jokers),
+		"sysJoker":      GetCardsResult([]app.Card{h.wild}),
 	}
 }
 

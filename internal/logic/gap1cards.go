@@ -1,4 +1,4 @@
-package internal
+package logic
 
 import (
 	"github.com/jinzhu/copier"

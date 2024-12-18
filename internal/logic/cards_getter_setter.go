@@ -1,4 +1,4 @@
-package internal
+package logic
 
 import "rummy-logic-v3/pkg/app"
 
@@ -6,7 +6,7 @@ func (h *Hand) SetCards(cards []app.Card) {
 	h.cards = cards
 }
 
-func (h *Hand) GetCards() []app.Card {
+func (h *Hand) Cards() []app.Card {
 	return h.cards
 }
 

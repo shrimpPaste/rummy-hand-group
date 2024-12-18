@@ -1,4 +1,4 @@
-package internal
+package logic
 
 import (
 	"math/rand"
@@ -104,7 +104,7 @@ func ShuffleDeck(deck []app.Card) []app.Card {
 	return deck
 }
 
-func getCardsResult(cards []app.Card) []int {
+func GetCardsResult(cards []app.Card) []int {
 	var myCards []int
 	for _, c := range cards {
 		if c.Suit == app.A {

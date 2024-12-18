@@ -1,4 +1,4 @@
-package internal
+package logic
 
 import "rummy-logic-v3/pkg/app"
 

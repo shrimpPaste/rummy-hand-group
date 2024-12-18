@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"rummy-logic-v3/internal"
+	"rummy-logic-v3/internal/logic"
 	"testing"
 )
 
 func TestLenIsTrue(t *testing.T) {
-	hand := internal.NewHand()
+	hand := logic.NewHand()
 
 	for i := range 1000000 {
 		result := hand.ToTest()
