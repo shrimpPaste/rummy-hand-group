@@ -51,17 +51,27 @@ func AccessLog() gin.HandlerFunc {
 		}
 
 		// 将请求体重新写回，以便后续处理函数可以再次读取
+		//c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		//
+		//var req Request
+		//if err := c.ShouldBind(&req); err != nil {
+		//	global.Logger.WithCaller(1).Errorf(c, "访问控制器解析请求数据错误: %v", err)
+		//	response.Success(c, xerr.InvalidParams.ErrorMsg())
+		//	c.Abort()
+		//	return
+		//}
+		//
+		//// 将请求体重新写回，以便后续处理函数可以再次读取
 		c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
-		var req Request
-		if err := c.ShouldBind(&req); err != nil {
-			global.Logger.WithCaller(1).Errorf(c, "访问控制器解析请求数据错误: %v", err)
+		var req map[string]any
+		if err := json.Unmarshal(bodyBytes, &req); err != nil {
+			global.Logger.WithCaller(1).Error(c, "访问控制器解析请求数据错误: "+err.Error())
 			response.Success(c, xerr.InvalidParams.ErrorMsg())
 			c.Abort()
 			return
 		}
 
-		// 将请求体重新写回，以便后续处理函数可以再次读取
 		c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 		c.Next()

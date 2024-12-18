@@ -16,7 +16,7 @@ func NewRouter() (r *gin.Engine) {
 
 	r.Use(middleware.Tracing())
 	r.Use(middleware.Recovery()) // 异常捕获
-	//r.Use(middleware.AccessLog())
+	r.Use(middleware.AccessLog())
 	//r.Use(middleware.CheckSign())
 	r.Use(middleware.Translations())
 	//r.Use(middleware.CheckIp())
