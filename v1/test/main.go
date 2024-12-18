@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -558,14 +557,14 @@ func main() {
 	//}
 	//fmt.Println("overCards", overCards, "result", result, "jokers", overJokers)
 
-	cards3 := []Card{
-		{Suit: "A", Value: 7},
-		{Suit: "A", Value: 10},
-	}
-	jokers2 := []Card{
-		{Suit: "D", Value: 5},
-		{Suit: "D", Value: 5},
-	}
-	overCards3, result3, overJokers3 := findGap3(cards3, jokers2)
-	fmt.Println("overCards3", overCards3, "result3", result3, "jokers3", overJokers3)
+	//cards3 := []Card{
+	//	{Suit: "A", Value: 7},
+	//	{Suit: "A", Value: 10},
+	//}
+	//jokers2 := []Card{
+	//	{Suit: "D", Value: 5},
+	//	{Suit: "D", Value: 5},
+	//}
+	//overCards3, result3, overJokers3 := findGap3(cards3, jokers2)
+	//fmt.Println("overCards3", overCards3, "result3", result3, "jokers3", overJokers3)
 }

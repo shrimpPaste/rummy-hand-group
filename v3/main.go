@@ -24,8 +24,8 @@ func main() {
 	})
 	internal.NewHand().Run(r)
 
-	err := r.Run()
+	err := r.Run(":8009")
 	if err != nil {
 		panic(err)
-	} // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	}
 }

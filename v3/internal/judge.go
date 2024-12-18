@@ -12,3 +12,10 @@ func (h *Hand) judgeIsHave1Seq(cards []app.Card) bool {
 	}
 	return false
 }
+
+func (h *Hand) judgeIsHave2Seq(pureCards, pureWithCards []app.Card) bool {
+	if len(pureCards) >= 6 || (len(pureCards) >= 3 && len(pureWithCards) >= 3) {
+		return true
+	}
+	return false
+}
