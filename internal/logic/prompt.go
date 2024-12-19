@@ -55,13 +55,12 @@ func (p *Prompt) Calculate() [][]int {
 
 	resp := p.GetResponse(pureCards, pureWithCards, setCards, setWithJoker, respOverCards)
 	return resp
-
 }
 
-func (p *Prompt) GetResponse(Cards ...[]app.Card) [][]int {
+func (p *Prompt) GetResponse(cards ...[]app.Card) [][]int {
 	var res [][]int
 
-	for _, card := range Cards {
+	for _, card := range cards {
 		if len(card) > 0 {
 			res = append(res, GetCardsResult(card))
 		}
