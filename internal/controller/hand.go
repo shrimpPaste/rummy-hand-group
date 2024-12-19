@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"math/rand"
 	"rummy-logic-v3/internal/logic"
 	"rummy-logic-v3/pkg/app"
 	"rummy-logic-v3/pkg/response"
@@ -78,27 +79,27 @@ func (h Hand) RangeHand(c *gin.Context) {
 		fmt.Printf("{Suit: app.%s, Value: %d},\n", cc.Suit, cc.Value)
 	}
 
-	cards = []app.Card{
-		{Suit: app.A, Value: 7},
-		{Suit: app.A, Value: 9},
-		{Suit: app.A, Value: 3},
-		{Suit: app.A, Value: 4},
-		{Suit: app.A, Value: 5},
-		{Suit: app.A, Value: 2},
+	//cards = []app.Card{
+	//	{Suit: app.A, Value: 7},
+	//	{Suit: app.A, Value: 9},
+	//	{Suit: app.A, Value: 3},
+	//	{Suit: app.A, Value: 4},
+	//	{Suit: app.A, Value: 5},
+	//	{Suit: app.A, Value: 2},
+	//
+	//	{Suit: app.B, Value: 2},
+	//	{Suit: app.B, Value: 5},
+	//
+	//	{Suit: app.C, Value: 1},
+	//	{Suit: app.C, Value: 2},
+	//	{Suit: app.C, Value: 9},
+	//	{Suit: app.C, Value: 13},
+	//
+	//	{Suit: app.D, Value: 5},
+	//}
 
-		{Suit: app.B, Value: 2},
-		{Suit: app.B, Value: 5},
-
-		{Suit: app.C, Value: 1},
-		{Suit: app.C, Value: 2},
-		{Suit: app.C, Value: 9},
-		{Suit: app.C, Value: 13},
-
-		{Suit: app.D, Value: 5},
-	}
-
-	//jokerV := rand.Intn(13) + 1
-	jokerV := 5
+	jokerV := rand.Intn(13) + 1
+	//jokerV := 5
 
 	prompt := logic.NewPrompt(cards, app.Card{Suit: app.A, Value: jokerV})
 	result := prompt.Calculate()

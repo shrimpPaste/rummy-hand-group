@@ -2,6 +2,7 @@ package logic
 
 import (
 	"rummy-logic-v3/pkg/app"
+	"sort"
 )
 
 type Prompt struct {
@@ -21,7 +22,7 @@ func (p *Prompt) Calculate() [][]int {
 		setCards = []app.Card{}
 		pureCards, overCards = h.GetPure(overCards)
 		if !h.judgeIsHave1Seq(pureCards) {
-			resp := p.GetResponse(h.cards)
+			resp := p.GetResponse(p.Sorting(h.cards)...)
 			return resp
 		}
 	}
@@ -61,7 +62,12 @@ func (p *Prompt) Calculate() [][]int {
 	copy(respOverCards, overCards)
 	respOverCards = append(respOverCards, jokers...)
 
-	resp := p.GetResponse(pureCards, pureWithCards, setCards, setWithJoker, respOverCards)
+	respSortCards := make([]app.Card, len(respOverCards), len(respOverCards))
+	for _, card := range p.Sorting(respOverCards) {
+		respSortCards = append(respSortCards, card...)
+	}
+
+	resp := p.GetResponse(pureCards, pureWithCards, setCards, setWithJoker, respSortCards)
 	return resp
 }
 
@@ -74,6 +80,29 @@ func (p *Prompt) GetResponse(cards ...[]app.Card) [][]int {
 		}
 	}
 	return res
+}
+
+func (p *Prompt) Sorting(cardsRaw []app.Card) [][]app.Card {
+	var response [][]app.Card
+	jokers, overCards := p.hand.findJoker(cardsRaw)
+
+	response = append(response, jokers)
+
+	suitCards := make(map[string][]app.Card, 4)
+	p.hand.groupCards(suitCards, overCards)
+
+	// 根据suit进行排序，优先级：黑桃 > 红桃 > 梅花 > 方块
+	for _, suit := range []string{app.A, app.B, app.C, app.D} {
+		if cards, ok := suitCards[suit]; ok {
+			sort.Slice(cards, func(i, j int) bool {
+				return cards[i].Value < cards[j].Value
+			})
+
+			response = append(response, cards)
+		}
+	}
+
+	return response
 }
 
 func NewPrompt(cards []app.Card, joker app.Card) *Prompt {
