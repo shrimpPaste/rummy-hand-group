@@ -14,19 +14,27 @@ func (p *Prompt) Calculate() [][]int {
 	// 1. 找纯刻子
 	overCards, setCards, _ := h.findSet(h.cards)
 	// 2. 找纯顺子
-	pureCards, overCards2 := h.GetPure(overCards)
+	pureCards, overCards := h.GetPure(overCards)
 	if !h.judgeIsHave1Seq(pureCards) {
-		resp := p.GetResponse(h.cards)
-		return resp
+		// 顺子不够，先把抽离出的刻子放回去再次检查
+		overCards = append(overCards, setCards...)
+		setCards = []app.Card{}
+		pureCards, overCards = h.GetPure(overCards)
+		if !h.judgeIsHave1Seq(pureCards) {
+			resp := p.GetResponse(h.cards)
+			return resp
+		}
 	}
 
 	// 3. 找joker
-	jokers, overCards := h.findJoker(overCards2)
+	jokers, overCards := h.findJoker(overCards)
 	var setWithJoker, pureWithCards, setCards2 []app.Card
 	if len(pureCards) < 6 {
 		// 顺子不够就要先找顺子，满足两个顺子才行
-		overCards = append(overCards, setCards...)
-		setCards = []app.Card{}
+		if len(setCards) > 0 {
+			overCards = append(overCards, setCards...)
+			setCards = []app.Card{}
+		}
 	}
 
 	// 找带joker的顺子
